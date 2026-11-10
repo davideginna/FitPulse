@@ -140,6 +140,65 @@ const smithSquat: ExerciseAnimation = {
   }
 };
 
+/**
+ * Adductor / abductor machine, vista frontale da seduti: le gambe si aprono e
+ * si chiudono. `spread` è la distanza dei piedi dal centro.
+ */
+const HIP_MACHINE_CENTER = pt(130, 112);
+function hipMachinePose(spread: number): PoseSpec {
+  const shoulder = shoulderOf(HIP_MACHINE_CENTER, -90);
+  return {
+    view: 'front',
+    hip: HIP_MACHINE_CENTER,
+    torsoAngle: -90,
+    // Mani sulle maniglie laterali del sedile.
+    nearArm: goal(pt(shoulder.x - 26, HIP_MACHINE_CENTER.y + 2), -1),
+    farArm: goal(pt(shoulder.x + 26, HIP_MACHINE_CENTER.y + 2), 1),
+    nearLeg: goal(pt(HIP_MACHINE_CENTER.x - spread, 165), -1),
+    farLeg: goal(pt(HIP_MACHINE_CENTER.x + spread, 165), 1)
+  };
+}
+
+const HipMachineSeat: React.FC = () => (
+  <g>
+    <rect x="112" y="52" width="36" height="66" rx="6" style={{ fill: COLORS.equipmentDark }} />
+    <rect x="98" y="116" width="64" height="9" rx="4" style={{ fill: COLORS.equipment }} />
+    <line x1="130" y1="125" x2="130" y2="175" style={{ stroke: COLORS.equipmentDark }} strokeWidth="6" />
+    <line x1="80" y1="172" x2="180" y2="172" style={{ stroke: COLORS.equipmentDark }} strokeWidth="5" strokeLinecap="round" />
+  </g>
+);
+
+/** Cuscinetti sulle ginocchia: all'interno (adductor) o all'esterno (abductor). */
+const KneePads: React.FC<{ s: Skeleton; side: 'inside' | 'outside' }> = ({ s, side }) => {
+  const offset = side === 'inside' ? 9 : -9;
+  const pads = [pt(s.nearLeg.joint.x + offset, s.nearLeg.joint.y), pt(s.farLeg.joint.x - offset, s.farLeg.joint.y)];
+  return (
+    <g>
+      {pads.map((pad, i) => (
+        <rect key={i} x={pad.x - 4} y={pad.y - 10} width="8" height="20" rx="4" style={{ fill: COLORS.weight }} />
+      ))}
+    </g>
+  );
+};
+
+const adductorMachine: ExerciseAnimation = {
+  durationSeconds: 2.8,
+  highlight: ['legs'],
+  caption: 'Stringi le gambe',
+  pose: (t) => hipMachinePose(lerp(44, 10, repCurve(t))),
+  behind: () => <HipMachineSeat />,
+  inFront: (s) => <KneePads s={s} side="inside" />
+};
+
+const abductorMachine: ExerciseAnimation = {
+  durationSeconds: 2.8,
+  highlight: ['legs'],
+  caption: 'Apri le gambe',
+  pose: (t) => hipMachinePose(lerp(10, 44, repCurve(t))),
+  behind: () => <HipMachineSeat />,
+  inFront: (s) => <KneePads s={s} side="outside" />
+};
+
 const lunges: ExerciseAnimation = {
   durationSeconds: 2.8,
   highlight: ['legs'],
@@ -956,6 +1015,8 @@ export const ANIMATIONS: Record<string, ExerciseAnimation> = {
   squat: squatBarbell,
   squat_dumbbell: squatDumbbell,
   smith_squat: smithSquat,
+  adductor_machine: adductorMachine,
+  abductor_machine: abductorMachine,
   lunges,
   deadlift,
   hip_thrust: hipThrust,

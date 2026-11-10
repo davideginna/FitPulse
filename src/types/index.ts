@@ -59,7 +59,9 @@ export interface Exercise {
     | 'lateral_raises'
     | 'smith_squat'
     | 'decline_crunch'
-    | 'decline_oblique_crunch';
+    | 'decline_oblique_crunch'
+    | 'adductor_machine'
+    | 'abductor_machine';
 }
 
 export interface RoutineExercise {

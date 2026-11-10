@@ -55,6 +55,58 @@ export const EXERCISES: Exercise[] = [
     svgType: 'smith_squat'
   },
   {
+    id: 'adductor_machine',
+    name: 'Adductor Machine (Chiusura Gambe)',
+    category: 'Gambe & Glutei',
+    equipment: 'Macchinario',
+    difficulty: 'Principiante',
+    targetMuscles: ['Adduttori (interno coscia)', 'Pettineo', 'Gracile'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 3,
+    recommendedReps: '12 - 15',
+    recommendedRestSeconds: 45,
+    description: 'Macchina da seduti in cui si stringono le gambe contro i cuscinetti posti all\'interno delle ginocchia. Tonifica l\'interno coscia.',
+    instructions: [
+      'Siediti con la schiena ben appoggiata allo schienale e afferra le maniglie laterali.',
+      'Regola l\'apertura di partenza: gambe aperte quanto basta per sentire un leggero allungamento, non di più.',
+      'Espirando stringi le gambe fino a far quasi toccare i cuscinetti, tieni 1 secondo.',
+      'Riapri lentamente (2-3 secondi) senza far sbattere il pacco pesi.'
+    ],
+    tipsForFatLoss: 'È un esercizio di isolamento: brucia poche calorie da solo. Inseriscilo dopo squat o affondi e tieni recuperi brevi per mantenere il ritmo della seduta.',
+    commonMistakes: [
+      'Partire troppo aperti forzando l\'allungamento',
+      'Staccare la schiena dallo schienale',
+      'Lasciare tornare le gambe di colpo'
+    ],
+    svgType: 'adductor_machine'
+  },
+  {
+    id: 'abductor_machine',
+    name: 'Abductor Machine (Apertura Gambe)',
+    category: 'Gambe & Glutei',
+    equipment: 'Macchinario',
+    difficulty: 'Principiante',
+    targetMuscles: ['Medio gluteo', 'Piccolo gluteo', 'Tensore della fascia lata'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 3,
+    recommendedReps: '15 - 20',
+    recommendedRestSeconds: 45,
+    description: 'Macchina da seduti in cui si allargano le gambe spingendo contro i cuscinetti posti all\'esterno delle ginocchia. Lavora i glutei laterali e stabilizza il bacino.',
+    instructions: [
+      'Siediti con la schiena appoggiata e afferra le maniglie laterali.',
+      'Parti con le gambe chiuse e le ginocchia contro i cuscinetti esterni.',
+      'Espirando apri le gambe il più possibile con un movimento controllato, tieni 1 secondo.',
+      'Richiudi lentamente senza far toccare i pesi tra una ripetizione e l\'altra.'
+    ],
+    tipsForFatLoss: 'Glutei laterali forti migliorano la stabilità di squat e affondi, gli esercizi che consumano più calorie. Usa serie lunghe (15-20) con pochi secondi di recupero.',
+    commonMistakes: [
+      'Usare lo slancio del busto in avanti e indietro',
+      'Carico eccessivo che riduce l\'ampiezza del movimento',
+      'Richiudere di colpo'
+    ],
+    svgType: 'abductor_machine'
+  },
+  {
     id: 'lunges',
     name: 'Affondi Camminati con Manubri',
     category: 'Gambe & Glutei',
