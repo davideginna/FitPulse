@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+/*
+ * Colori delle figure animate (src/components/exerciseFigure).
+ * Puntano alle scale di Tailwind, quindi cambiano da sole col tema.
+ */
+:root {
+  --fig-body: var(--color-slate-200);
+  --fig-body-far: var(--color-slate-500);
+  --fig-active: var(--color-emerald-400);
+  --fig-active-far: var(--color-emerald-700);
+  --fig-head: var(--color-cyan-400);
+  --fig-equipment: var(--color-slate-600);
+  --fig-equipment-light: var(--color-slate-400);
+  --fig-equipment-dark: var(--color-slate-800);
+  --fig-weight: var(--color-amber-500);
+  --fig-accent: var(--color-cyan-400);
+  --fig-floor: var(--color-slate-700);
+  --fig-outline: var(--color-slate-950);
+}
+
+/*
+ * TEMI
+ * Le componenti usano classi Tailwind (bg-slate-950, text-emerald-400, ...) che in
+ * Tailwind v4 leggono variabili CSS (--color-slate-950, ...). Ogni tema ridefinisce
+ * quelle variabili sull'elemento <html data-theme="...">: nessun componente va toccato.
+ *  - emerald = colore principale (accento), cyan = colore secondario, slate = sfondi e testi.
+ * Il tema "smeraldo" è quello predefinito e non ridefinisce nulla.
+ * L'elenco dei temi mostrato all'utente è in src/utils/theme.ts.
+ */
+
+/* Oceano: azzurro + indaco */
+:root[data-theme="oceano"] {
+  --color-emerald-50: var(--color-sky-50);
+  --color-emerald-100: var(--color-sky-100);
+  --color-emerald-200: var(--color-sky-200);
+  --color-emerald-300: var(--color-sky-300);
+  --color-emerald-400: var(--color-sky-400);
+  --color-emerald-500: var(--color-sky-500);
+  --color-emerald-600: var(--color-sky-600);
+  --color-emerald-700: var(--color-sky-700);
+  --color-emerald-800: var(--color-sky-800);
+  --color-emerald-900: var(--color-sky-900);
+  --color-emerald-950: var(--color-sky-950);
+  --color-cyan-50: var(--color-indigo-50);
+  --color-cyan-100: var(--color-indigo-100);
+  --color-cyan-200: var(--color-indigo-200);
+  --color-cyan-300: var(--color-indigo-300);
+  --color-cyan-400: var(--color-indigo-400);
+  --color-cyan-500: var(--color-indigo-500);
+  --color-cyan-600: var(--color-indigo-600);
+  --color-cyan-700: var(--color-indigo-700);
+  --color-cyan-800: var(--color-indigo-800);
+  --color-cyan-900: var(--color-indigo-900);
+  --color-cyan-950: var(--color-indigo-950);
+}
+
+/* Tramonto: arancio + rosa */
+:root[data-theme="tramonto"] {
+  --color-emerald-50: var(--color-orange-50);
+  --color-emerald-100: var(--color-orange-100);
+  --color-emerald-200: var(--color-orange-200);
+  --color-emerald-300: var(--color-orange-300);
+  --color-emerald-400: var(--color-orange-400);
+  --color-emerald-500: var(--color-orange-500);
+  --color-emerald-600: var(--color-orange-600);
+  --color-emerald-700: var(--color-orange-700);
+  --color-emerald-800: var(--color-orange-800);
+  --color-emerald-900: var(--color-orange-900);
+  --color-emerald-950: var(--color-orange-950);
+  --color-cyan-50: var(--color-rose-50);
+  --color-cyan-100: var(--color-rose-100);
+  --color-cyan-200: var(--color-rose-200);
+  --color-cyan-300: var(--color-rose-300);
+  --color-cyan-400: var(--color-rose-400);
+  --color-cyan-500: var(--color-rose-500);
+  --color-cyan-600: var(--color-rose-600);
+  --color-cyan-700: var(--color-rose-700);
+  --color-cyan-800: var(--color-rose-800);
+  --color-cyan-900: var(--color-rose-900);
+  --color-cyan-950: var(--color-rose-950);
+}
+
+/* Viola: viola + fucsia */
+:root[data-theme="viola"] {
+  --color-emerald-50: var(--color-violet-50);
+  --color-emerald-100: var(--color-violet-100);
+  --color-emerald-200: var(--color-violet-200);
+  --color-emerald-300: var(--color-violet-300);
+  --color-emerald-400: var(--color-violet-400);
+  --color-emerald-500: var(--color-violet-500);
+  --color-emerald-600: var(--color-violet-600);
+  --color-emerald-700: var(--color-violet-700);
+  --color-emerald-800: var(--color-violet-800);
+  --color-emerald-900: var(--color-violet-900);
+  --color-emerald-950: var(--color-violet-950);
+  --color-cyan-50: var(--color-fuchsia-50);
+  --color-cyan-100: var(--color-fuchsia-100);
+  --color-cyan-200: var(--color-fuchsia-200);
+  --color-cyan-300: var(--color-fuchsia-300);
+  --color-cyan-400: var(--color-fuchsia-400);
+  --color-cyan-500: var(--color-fuchsia-500);
+  --color-cyan-600: var(--color-fuchsia-600);
+  --color-cyan-700: var(--color-fuchsia-700);
+  --color-cyan-800: var(--color-fuchsia-800);
+  --color-cyan-900: var(--color-fuchsia-900);
+  --color-cyan-950: var(--color-fuchsia-950);
+}
+
+/* Carbone: nero puro (ideale per schermi OLED), accento lime */
+:root[data-theme="carbone"] {
+  --color-emerald-50: var(--color-lime-50);
+  --color-emerald-100: var(--color-lime-100);
+  --color-emerald-200: var(--color-lime-200);
+  --color-emerald-300: var(--color-lime-300);
+  --color-emerald-400: var(--color-lime-400);
+  --color-emerald-500: var(--color-lime-500);
+  --color-emerald-600: var(--color-lime-600);
+  --color-emerald-700: var(--color-lime-700);
+  --color-emerald-800: var(--color-lime-800);
+  --color-emerald-900: var(--color-lime-900);
+  --color-emerald-950: var(--color-lime-950);
+  --color-cyan-50: var(--color-teal-50);
+  --color-cyan-100: var(--color-teal-100);
+  --color-cyan-200: var(--color-teal-200);
+  --color-cyan-300: var(--color-teal-300);
+  --color-cyan-400: var(--color-teal-400);
+  --color-cyan-500: var(--color-teal-500);
+  --color-cyan-600: var(--color-teal-600);
+  --color-cyan-700: var(--color-teal-700);
+  --color-cyan-800: var(--color-teal-800);
+  --color-cyan-900: var(--color-teal-900);
+  --color-cyan-950: var(--color-teal-950);
+  --color-slate-50: var(--color-neutral-50);
+  --color-slate-100: var(--color-neutral-100);
+  --color-slate-200: var(--color-neutral-200);
+  --color-slate-300: var(--color-neutral-300);
+  --color-slate-400: var(--color-neutral-400);
+  --color-slate-500: var(--color-neutral-500);
+  --color-slate-600: var(--color-neutral-600);
+  --color-slate-700: var(--color-neutral-700);
+  --color-slate-800: var(--color-neutral-800);
+  --color-slate-900: var(--color-neutral-900);
+  --color-slate-950: var(--color-neutral-950);
+  --color-slate-950: #000;
+}
+
+/*
+ * Chiaro: la scala slate viene capovolta (950 ↔ 50) così gli sfondi scuri diventano
+ * chiari (valori letterali: un rimando var() a se stessa sarebbe circolare) e i testi chiari diventano scuri; anche "white" diventa scuro.
+ * Gli accenti usano tonalità più scure per restare leggibili su fondo chiaro.
+ */
+:root[data-theme="chiaro"] {
+  --color-slate-50: oklch(12.9% 0.042 264.695); /* slate-950 */
+  --color-slate-100: oklch(20.8% 0.042 265.755); /* slate-900 */
+  --color-slate-200: oklch(27.9% 0.041 260.031); /* slate-800 */
+  --color-slate-300: oklch(37.2% 0.044 257.287); /* slate-700 */
+  --color-slate-400: oklch(44.6% 0.043 257.281); /* slate-600 */
+  --color-slate-500: oklch(55.4% 0.046 257.417); /* slate-500 */
+  --color-slate-600: oklch(70.4% 0.04 256.788); /* slate-400 */
+  --color-slate-700: oklch(86.9% 0.022 252.894); /* slate-300 */
+  --color-slate-800: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --color-slate-900: oklch(96.8% 0.007 247.896); /* slate-100 */
+  --color-slate-950: oklch(98.4% 0.003 247.858); /* slate-50 */
+  --color-white: #0f172a;
+  --color-emerald-300: #059669;
+  --color-emerald-400: #059669;
+  --color-cyan-300: #0284c7;
+  --color-cyan-400: #0284c7;
+  /* Le tonalità più scure degli accenti fanno da sfondo a badge e card: qui diventano tinte chiare. */
+  --color-emerald-800: #a7f3d0;
+  --color-emerald-900: #d1fae5;
+  --color-emerald-950: #ecfdf5;
+  --color-cyan-950: #ecfeff;
+  color-scheme: light;
+}
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    background-color: var(--color-slate-950);
+    color: var(--color-slate-50);
+  }
+}
+
+/* Custom scrollbar hiding */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* ==========================================================================
+   UI MOTION & TRANSITIONS
+   Silky smooth 60fps entrances and modal interactions
+   ========================================================================== */
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: modal-fade-in;
+}
+
+.slide-in-from-bottom {
+  animation-name: slide-in-up;
+}
+
+.tab-transition {
+  animation: tab-fade-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ==========================================================================
+   BIOMECHANICAL GLOW & ENERGY EFFECTS
+   ========================================================================== */
+
+@keyframes muscle-energy-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
+    opacity: 0.9;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 1)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.6));
+    opacity: 1;
+  }
+}
+
+.anim-muscle-glow {
+  animation: muscle-energy-pulse 2.8s ease-in-out infinite;
+}
+
+/* Breathing rhythm guide visualizer */
+@keyframes breath-glow-pulse {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+.anim-breath {
+  animation: breath-glow-pulse 3.2s ease-in-out infinite;
+}
