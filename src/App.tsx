@@ -8,6 +8,7 @@ import { ActiveWorkoutView } from './components/ActiveWorkoutView';
 import { ExerciseDetailModal } from './components/ExerciseDetailModal';
 import { RoutineBuilderModal } from './components/RoutineBuilderModal';
 import { ThemePicker } from './components/ThemePicker';
+import { useFreeTimer } from './hooks/useFreeTimer';
 import { Routine, Exercise } from './types';
 import { getAllRoutines } from './utils/storage';
 import { EXERCISES } from './data/exercises';
@@ -21,6 +22,9 @@ export const App: React.FC = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  // Il timer della tab "Timer" vive qui (non in FreeTimerTab) perché la tab viene
+  // smontata quando si cambia tab: così continua a scorrere e a suonare ovunque.
+  const freeTimer = useFreeTimer();
 
   // Monitor online / offline status for PWA
   useEffect(() => {
@@ -161,7 +165,7 @@ export const App: React.FC = () => {
             <ExerciseLibraryTab onSelectExercise={(ex) => setSelectedExercise(ex)} />
           )}
 
-          {activeTab === 'timer' && <FreeTimerTab />}
+          {activeTab === 'timer' && <FreeTimerTab timer={freeTimer} />}
 
           {activeTab === 'progress' && <ProgressGuideTab />}
         </div>
@@ -188,7 +192,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Bottom Navigation */}
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navbar activeTab={activeTab} onTabChange={setActiveTab} isTimerRunning={freeTimer.isAnyRunning} />
     </div>
   );
 };

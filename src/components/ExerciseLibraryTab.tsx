@@ -119,11 +119,11 @@ export const ExerciseLibraryTab: React.FC<Props> = ({ onSelectExercise }) => {
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-300 transition line-clamp-1 mt-0.5">
+                    <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-300 transition line-clamp-2 mt-0.5">
                       {exercise.name}
                     </h3>
 
-                    <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                    <p className="text-[11px] text-slate-400 line-clamp-3 mt-0.5">
                       {exercise.description}
                     </p>
                   </div>

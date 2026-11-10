@@ -1,101 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
-import { playCountdownBeep, playRestCompleteSound } from '../utils/audio';
+import {
+  FreeTimerControls,
+  getRestRemainingMs,
+  getTabataRemainingMs,
+  toDisplaySeconds
+} from '../hooks/useFreeTimer';
 
-export const FreeTimerTab: React.FC = () => {
-  const [mode, setMode] = useState<'rest' | 'tabata'>('rest');
+interface Props {
+  /** Stato e azioni del timer, posseduti da App (vedi useFreeTimer) per sopravvivere al cambio tab. */
+  timer: FreeTimerControls;
+}
 
-  // Quick Rest State
-  const [restDuration, setRestDuration] = useState(60);
-  const [restTimeLeft, setRestTimeLeft] = useState(60);
-  const [isRestRunning, setIsRestRunning] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+const DISPLAY_REFRESH_MS = 250;
 
-  // Tabata / HIIT State
-  const [workSec, setWorkSec] = useState(30);
-  const [pauseSec, setPauseSec] = useState(15);
-  const [totalRounds, setTotalRounds] = useState(8);
-  const [currentRound, setCurrentRound] = useState(1);
-  const [tabataPhase, setTabataPhase] = useState<'work' | 'rest'>('work');
-  const [tabataTimeLeft, setTabataTimeLeft] = useState(30);
-  const [isTabataRunning, setIsTabataRunning] = useState(false);
+export const FreeTimerTab: React.FC<Props> = ({ timer }) => {
+  const { state, isAnyRunning } = timer;
 
-  // Quick Rest countdown effect
+  // Questo componente non conta il tempo: legge Date.now() a ogni render e calcola
+  // il residuo da `endsAt`. Lo stato qui sotto serve solo a forzare un re-render
+  // periodico mentre un timer scorre, per aggiornare il display.
+  const [, setRefreshTick] = useState(0);
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isRestRunning && restTimeLeft > 0) {
-      interval = setInterval(() => {
-        setRestTimeLeft((prev) => {
-          const next = prev - 1;
-          if (soundEnabled && next <= 3 && next > 0) {
-            playCountdownBeep(580, 0.1);
-          }
-          if (next === 0) {
-            if (soundEnabled) playRestCompleteSound();
-            setIsRestRunning(false);
-          }
-          return Math.max(0, next);
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRestRunning, restTimeLeft, soundEnabled]);
+    if (!isAnyRunning) return;
+    const interval = setInterval(() => setRefreshTick((n) => n + 1), DISPLAY_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [isAnyRunning]);
 
-  // Tabata countdown effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isTabataRunning) {
-      interval = setInterval(() => {
-        setTabataTimeLeft((prev) => {
-          const next = prev - 1;
-          if (soundEnabled && next <= 3 && next > 0) {
-            playCountdownBeep(650, 0.08);
-          }
-          if (next <= 0) {
-            if (soundEnabled) playRestCompleteSound();
-            if (tabataPhase === 'work') {
-              // Switch to rest phase
-              setTabataPhase('rest');
-              return pauseSec;
-            } else {
-              // End of rest phase -> check round
-              if (currentRound >= totalRounds) {
-                setIsTabataRunning(false);
-                return 0;
-              }
-              setCurrentRound((r) => r + 1);
-              setTabataPhase('work');
-              return workSec;
-            }
-          }
-          return next;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isTabataRunning, tabataTimeLeft, tabataPhase, currentRound, totalRounds, workSec, pauseSec, soundEnabled]);
+  const now = Date.now();
+  const mode = state.mode;
+  const soundEnabled = state.soundEnabled;
 
-  const selectRestPreset = (secs: number) => {
-    setRestDuration(secs);
-    setRestTimeLeft(secs);
-    setIsRestRunning(false);
-  };
+  const restDuration = state.restDurationSec;
+  const restTimeLeft = toDisplaySeconds(getRestRemainingMs(state, now));
+  const isRestRunning = state.rest.status === 'running';
+  // Con "+15s" il residuo può superare la durata scelta: limitiamo l'anello a pieno.
+  const restProgress = Math.min(1, restTimeLeft / restDuration);
 
-  const resetRest = () => {
-    setIsRestRunning(false);
-    setRestTimeLeft(restDuration);
-  };
-
-  const resetTabata = () => {
-    setIsTabataRunning(false);
-    setCurrentRound(1);
-    setTabataPhase('work');
-    setTabataTimeLeft(workSec);
-  };
+  const workSec = state.workSec;
+  const pauseSec = state.pauseSec;
+  const totalRounds = state.totalRounds;
+  const currentRound = state.tabataRound;
+  const tabataPhase = state.tabataPhase;
+  const tabataTimeLeft = toDisplaySeconds(getTabataRemainingMs(state, now));
+  const isTabataRunning = state.tabata.status === 'running';
 
   const formatMinSec = (total: number) => {
     const m = Math.floor(total / 60);
@@ -112,7 +60,7 @@ export const FreeTimerTab: React.FC = () => {
           <p className="text-xs text-slate-400">Cronometro da palestra e intervalli brucia-grassi</p>
         </div>
         <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
+          onClick={timer.toggleSound}
           className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-300 hover:text-white"
         >
           {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-slate-500" />}
@@ -122,7 +70,7 @@ export const FreeTimerTab: React.FC = () => {
       {/* Mode Switcher */}
       <div className="grid grid-cols-2 p-1 bg-slate-900 rounded-2xl border border-slate-800">
         <button
-          onClick={() => setMode('rest')}
+          onClick={() => timer.setMode('rest')}
           className={`py-2 rounded-xl text-xs font-bold transition ${
             mode === 'rest'
               ? 'bg-emerald-500 text-slate-950 shadow-md'
@@ -132,7 +80,7 @@ export const FreeTimerTab: React.FC = () => {
           Recupero Tra Serie
         </button>
         <button
-          onClick={() => setMode('tabata')}
+          onClick={() => timer.setMode('tabata')}
           className={`py-2 rounded-xl text-xs font-bold transition ${
             mode === 'tabata'
               ? 'bg-emerald-500 text-slate-950 shadow-md'
@@ -159,7 +107,7 @@ export const FreeTimerTab: React.FC = () => {
                   strokeWidth="12"
                   fill="transparent"
                   strokeDasharray={2 * Math.PI * 100}
-                  strokeDashoffset={(2 * Math.PI * 100) - ((restTimeLeft / restDuration) * (2 * Math.PI * 100))}
+                  strokeDashoffset={(2 * Math.PI * 100) - (restProgress * (2 * Math.PI * 100))}
                   strokeLinecap="round"
                   className={`transition-all duration-300 ${restTimeLeft <= 5 ? 'stroke-red-500' : 'stroke-emerald-500'}`}
                 />
@@ -178,7 +126,7 @@ export const FreeTimerTab: React.FC = () => {
             {/* Play / Pause / Reset Actions */}
             <div className="flex items-center space-x-4 mt-6">
               <button
-                onClick={resetRest}
+                onClick={timer.resetRest}
                 className="p-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition"
                 title="Reset"
               >
@@ -186,7 +134,7 @@ export const FreeTimerTab: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setIsRestRunning(!isRestRunning)}
+                onClick={timer.toggleRest}
                 className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2 text-base"
               >
                 {isRestRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
@@ -194,7 +142,7 @@ export const FreeTimerTab: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setRestTimeLeft((prev) => prev + 15)}
+                onClick={() => timer.addRestTime(15)}
                 className="p-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition font-bold text-xs"
               >
                 +15s
@@ -211,7 +159,7 @@ export const FreeTimerTab: React.FC = () => {
               {[30, 45, 60, 75, 90, 120].map((secs) => (
                 <button
                   key={secs}
-                  onClick={() => selectRestPreset(secs)}
+                  onClick={() => timer.selectRestPreset(secs)}
                   className={`py-3 rounded-2xl text-xs font-bold transition border ${
                     restDuration === secs
                       ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-inner'
@@ -259,14 +207,14 @@ export const FreeTimerTab: React.FC = () => {
 
             <div className="flex items-center space-x-4">
               <button
-                onClick={resetTabata}
+                onClick={timer.resetTabata}
                 className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition"
               >
                 <RotateCcw className="w-5 h-5" />
               </button>
 
               <button
-                onClick={() => setIsTabataRunning(!isTabataRunning)}
+                onClick={timer.toggleTabata}
                 className="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2"
               >
                 {isTabataRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
@@ -286,8 +234,8 @@ export const FreeTimerTab: React.FC = () => {
                 <span className="text-[10px] text-slate-400 block mb-1">Lavoro</span>
                 <span className="text-base font-extrabold text-emerald-400">{workSec}s</span>
                 <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => setWorkSec((p) => Math.max(10, p - 5))} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => setWorkSec((p) => p + 5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
+                  <button onClick={() => timer.changeWorkSec(-5)} className="p-1 bg-slate-800 rounded text-xs">-</button>
+                  <button onClick={() => timer.changeWorkSec(5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
                 </div>
               </div>
 
@@ -295,8 +243,8 @@ export const FreeTimerTab: React.FC = () => {
                 <span className="text-[10px] text-slate-400 block mb-1">Riposo</span>
                 <span className="text-base font-extrabold text-cyan-400">{pauseSec}s</span>
                 <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => setPauseSec((p) => Math.max(5, p - 5))} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => setPauseSec((p) => p + 5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
+                  <button onClick={() => timer.changePauseSec(-5)} className="p-1 bg-slate-800 rounded text-xs">-</button>
+                  <button onClick={() => timer.changePauseSec(5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
                 </div>
               </div>
 
@@ -304,8 +252,8 @@ export const FreeTimerTab: React.FC = () => {
                 <span className="text-[10px] text-slate-400 block mb-1">Round</span>
                 <span className="text-base font-extrabold text-white">{totalRounds}</span>
                 <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => setTotalRounds((p) => Math.max(1, p - 1))} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => setTotalRounds((p) => p + 1)} className="p-1 bg-slate-800 rounded text-xs">+</button>
+                  <button onClick={() => timer.changeTotalRounds(-1)} className="p-1 bg-slate-800 rounded text-xs">-</button>
+                  <button onClick={() => timer.changeTotalRounds(1)} className="p-1 bg-slate-800 rounded text-xs">+</button>
                 </div>
               </div>
             </div>

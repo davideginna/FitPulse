@@ -147,7 +147,7 @@ export const RestTimerModal: React.FC<Props> = ({
         </div>
 
         {/* Exercise info */}
-        <h3 className="text-lg font-bold text-white mb-0.5 line-clamp-1">{exerciseName}</h3>
+        <h3 className="text-lg font-bold text-white mb-0.5 line-clamp-2">{exerciseName}</h3>
         <p className="text-xs text-slate-400 mb-6">
           Serie {setNumber} di {totalSets} completata
         </p>

@@ -6,9 +6,11 @@ export type TabType = 'workout' | 'exercises' | 'timer' | 'progress';
 interface Props {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  /** Mostra un pallino sull'icona Timer quando il timer libero sta scorrendo. */
+  isTimerRunning?: boolean;
 }
 
-export const Navbar: React.FC<Props> = ({ activeTab, onTabChange }) => {
+export const Navbar: React.FC<Props> = ({ activeTab, onTabChange, isTimerRunning = false }) => {
   const tabs = [
     { id: 'workout' as TabType, label: 'Allenati', icon: Dumbbell },
     { id: 'exercises' as TabType, label: 'Esercizi', icon: BookOpen },
@@ -22,6 +24,7 @@ export const Navbar: React.FC<Props> = ({ activeTab, onTabChange }) => {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const showTimerBadge = tab.id === 'timer' && isTimerRunning && !isActive;
           return (
             <button
               key={tab.id}
@@ -32,7 +35,15 @@ export const Navbar: React.FC<Props> = ({ activeTab, onTabChange }) => {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Icon className={`w-5 h-5 mb-0.5 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : ''}`} />
+              <span className="relative flex">
+                <Icon className={`w-5 h-5 mb-0.5 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : ''}`} />
+                {showTimerBadge && (
+                  <span
+                    className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse"
+                    aria-label="Timer in corso"
+                  />
+                )}
+              </span>
               <span className="text-[10px] tracking-tight">{tab.label}</span>
             </button>
           );

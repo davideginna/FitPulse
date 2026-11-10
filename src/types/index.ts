@@ -16,13 +16,41 @@ export type Equipment =
   | 'Kettlebell'
   | 'Cardio';
 
+/**
+ * Zone muscolari usate dalla mappa dei muscoli e per colorare la figura animata.
+ * I disegni di ogni zona sono in src/components/muscleMap/muscleShapes.ts.
+ */
+export type MuscleRegion =
+  | 'pettorali'
+  | 'deltoidi'
+  | 'bicipiti'
+  | 'tricipiti'
+  | 'avambracci'
+  | 'trapezio'
+  | 'dorsali'
+  | 'lombari'
+  | 'addominali'
+  | 'obliqui'
+  | 'flessori_anca'
+  | 'glutei'
+  | 'abduttori'
+  | 'adduttori'
+  | 'quadricipiti'
+  | 'femorali'
+  | 'polpacci';
+
 export interface Exercise {
   id: string;
   name: string;
   category: MuscleGroup;
   equipment: Equipment;
   difficulty: 'Principiante' | 'Intermedio' | 'Avanzato';
+  /** Descrizione libera mostrata all'utente (può citare muscoli specifici). */
   targetMuscles: string[];
+  /** Zone che lavorano di più: evidenziate a colore pieno. */
+  primaryMuscles: MuscleRegion[];
+  /** Zone di supporto/stabilizzazione: evidenziate a colore attenuato. */
+  secondaryMuscles: MuscleRegion[];
   calorieBurnRating: 'Moderata' | 'Alta' | 'Molto Alta';
   defaultSets: number;
   recommendedReps: string;
@@ -61,7 +89,16 @@ export interface Exercise {
     | 'decline_crunch'
     | 'decline_oblique_crunch'
     | 'adductor_machine'
-    | 'abductor_machine';
+    | 'abductor_machine'
+    | 'leg_raises'
+    | 'reverse_crunch'
+    | 'bicycle_crunch'
+    | 'dead_bug'
+    | 'flutter_kicks'
+    | 'hollow_hold'
+    | 'v_ups'
+    | 'heel_touches'
+    | 'recumbent_bike';
 }
 
 export interface RoutineExercise {
@@ -71,6 +108,9 @@ export interface RoutineExercise {
   restSeconds: number;
   notes?: string;
 }
+
+/** Obiettivi di allenamento selezionabili (elenco e testi in src/data/goals.ts). */
+export type GoalId = 'dimagrire' | 'addome' | 'gambe_glutei' | 'braccia_spalle' | 'petto_schiena' | 'resistenza';
 
 export interface Routine {
   id: string;
@@ -82,6 +122,11 @@ export interface Routine {
   estimatedDurationMinutes: number;
   estimatedCaloriesBurn: number;
   tags: string[];
+  /**
+   * Obiettivi per cui la scheda è consigliata. Assente nelle schede create
+   * dall'utente o al volo: quelle vengono mostrate con qualunque obiettivo.
+   */
+  goals?: GoalId[];
   exercises: RoutineExercise[];
 }
 

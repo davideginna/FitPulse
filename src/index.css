@@ -172,6 +172,9 @@
   --color-emerald-900: #d1fae5;
   --color-emerald-950: #ecfdf5;
   --color-cyan-950: #ecfeff;
+  /* Attrezzi e pavimento delle figure: con la scala invertita sarebbero quasi bianchi su bianco. */
+  --fig-equipment-dark: var(--color-slate-600);
+  --fig-floor: var(--color-slate-600);
   color-scheme: light;
 }
 

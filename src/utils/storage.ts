@@ -1,5 +1,7 @@
-import { WorkoutHistoryItem, UserStats, Routine } from '../types';
+import { WorkoutHistoryItem, UserStats, Routine, GoalId } from '../types';
+import { DEFAULT_GOAL, TRAINING_GOALS } from '../data/goals';
 import { PRESET_ROUTINES } from '../data/routines';
+import type { FreeTimerState } from '../hooks/useFreeTimer';
 
 const STORAGE_KEYS = {
   HISTORY: 'fitpulse_workout_history',
@@ -129,4 +131,62 @@ export function saveCustomRoutine(routine: Routine): Routine[] {
 export function getAllRoutines(): Routine[] {
   const custom = getCustomRoutines();
   return [...PRESET_ROUTINES, ...custom];
+}
+
+// --- Timer libero (tab "Timer") ---
+// Chiave separata da STORAGE_KEYS: lo stato salvato contiene timestamp assoluti
+// (`endsAt`), così dopo un ricaricamento il timer riprende con il tempo giusto.
+
+const FREE_TIMER_KEY = 'fitpulse_free_timer_state';
+
+/** Restituisce lo stato salvato del timer libero, o null se assente/non valido. */
+export function getFreeTimerState(): FreeTimerState | null {
+  try {
+    const raw = localStorage.getItem(FREE_TIMER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FreeTimerState;
+    // Controllo minimo di forma: se il formato è cambiato si riparte dai valori predefiniti.
+    const isValid =
+      (parsed.mode === 'rest' || parsed.mode === 'tabata') &&
+      typeof parsed.restDurationSec === 'number' &&
+      typeof parsed.workSec === 'number' &&
+      typeof parsed.pauseSec === 'number' &&
+      typeof parsed.totalRounds === 'number' &&
+      typeof parsed.tabataRound === 'number' &&
+      typeof parsed.rest?.status === 'string' &&
+      typeof parsed.tabata?.status === 'string';
+    return isValid ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveFreeTimerState(state: FreeTimerState): void {
+  try {
+    localStorage.setItem(FREE_TIMER_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Error saving free timer state', e);
+  }
+}
+
+// --- Obiettivo di allenamento scelto (tab "Allenati") ---
+
+const SELECTED_GOAL_KEY = 'fitpulse_selected_goal';
+
+/** Obiettivo salvato, oppure quello predefinito se assente o non più valido. */
+export function getSelectedGoal(): GoalId {
+  try {
+    const saved = localStorage.getItem(SELECTED_GOAL_KEY);
+    return TRAINING_GOALS.some((g) => g.id === saved) ? (saved as GoalId) : DEFAULT_GOAL;
+  } catch {
+    return DEFAULT_GOAL;
+  }
+}
+
+export function saveSelectedGoal(goal: GoalId): void {
+  try {
+    localStorage.setItem(SELECTED_GOAL_KEY, goal);
+  } catch (e) {
+    console.error('Error saving selected goal', e);
+  }
 }

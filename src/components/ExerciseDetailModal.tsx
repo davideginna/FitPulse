@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Flame, Clock, RotateCcw, AlertTriangle, CheckCircle2, Dumbbell } from 'lucide-react';
 import { Exercise } from '../types';
 import { ExerciseIllustration } from './ExerciseIllustration';
+import { MuscleMap } from './muscleMap/MuscleMap';
 
 interface Props {
   exercise: Exercise;
@@ -23,7 +24,7 @@ export const ExerciseDetailModal: React.FC<Props> = ({
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
               {exercise.category} • {exercise.equipment}
             </span>
-            <h2 className="text-lg font-bold text-white line-clamp-1">{exercise.name}</h2>
+            <h2 className="text-lg font-bold text-white leading-snug">{exercise.name}</h2>
           </div>
           <button
             onClick={onClose}
@@ -70,6 +71,11 @@ export const ExerciseDetailModal: React.FC<Props> = ({
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
               <Dumbbell className="w-3.5 h-3.5 text-emerald-400" /> Muscoli Coinvolti
             </h4>
+            <MuscleMap
+              primary={exercise.primaryMuscles}
+              secondary={exercise.secondaryMuscles}
+              className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-3 mb-2.5"
+            />
             <div className="flex flex-wrap gap-1.5">
               {exercise.targetMuscles.map((muscle) => (
                 <span

@@ -145,7 +145,13 @@ export const ExerciseIllustration: React.FC<Props> = ({
       )}
 
       <div className={`w-full h-full flex items-center justify-center ${compact ? 'p-1' : 'p-2 pt-5 pb-5'}`}>
-        <ExerciseFigure animationKey={animationKey} t={shownT} className="w-full h-full max-h-56" />
+        <ExerciseFigure
+          animationKey={animationKey}
+          t={shownT}
+          primaryMuscles={exercise.primaryMuscles}
+          secondaryMuscles={exercise.secondaryMuscles}
+          className="w-full h-full max-h-56"
+        />
       </div>
 
       {!compact && (

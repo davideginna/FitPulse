@@ -15,17 +15,13 @@
  * mani e piedi raggiungano i bersagli dichiarati.
  */
 import React from 'react';
-import { BendDirection, Point, distance, lerp, lerpPoint, polar, pt, repCurve } from './kinematics';
+import { BendDirection, Point, distance, lerp, lerpPoint, polar, pt, repCurve, solveTwoBone } from './kinematics';
 import { ANKLE_Y, BODY, LimbGoal, PoseSpec, Skeleton, keyframePose, shoulderOf } from './skeleton';
 import { Bench, COLORS, Cable, Dumbbell, Kettlebell, Plate } from './equipment';
-
-export type BodyPart = 'arms' | 'legs' | 'torso';
 
 export interface ExerciseAnimation {
   /** Durata di un ciclo a velocità normale. */
   durationSeconds: number;
-  /** Parti del corpo evidenziate col colore dei muscoli attivi. */
-  highlight: BodyPart[];
   caption?: string;
   pose: (t: number) => PoseSpec;
   /** Attrezzi dietro la figura (macchine, panche). */
@@ -91,7 +87,6 @@ function squatPose(t: number, withDumbbells: boolean): PoseSpec {
 
 const squatBarbell: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Cosce parallele',
   pose: (t) => squatPose(t, false),
   inFront: (s) => <Plate at={polar(s.shoulder, 5, torsoAngleOf(s) - 90)} radius={10} />
@@ -111,7 +106,6 @@ const squatDumbbell: ExerciseAnimation = {
 const SMITH_RAIL_X = 108;
 const smithSquat: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Piedi avanti',
   pose: (t) => {
     const p = repCurve(t);
@@ -183,7 +177,6 @@ const KneePads: React.FC<{ s: Skeleton; side: 'inside' | 'outside' }> = ({ s, si
 
 const adductorMachine: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Stringi le gambe',
   pose: (t) => hipMachinePose(lerp(44, 10, repCurve(t))),
   behind: () => <HipMachineSeat />,
@@ -192,7 +185,6 @@ const adductorMachine: ExerciseAnimation = {
 
 const abductorMachine: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Apri le gambe',
   pose: (t) => hipMachinePose(lerp(10, 44, repCurve(t))),
   behind: () => <HipMachineSeat />,
@@ -201,7 +193,6 @@ const abductorMachine: ExerciseAnimation = {
 
 const lunges: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Ginocchio a 90°',
   pose: (t) => {
     const p = repCurve(t);
@@ -222,7 +213,6 @@ const lunges: ExerciseAnimation = {
 
 const deadlift: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs', 'torso'],
   caption: 'Schiena neutra',
   pose: (t) => {
     const p = repCurve(t);
@@ -238,7 +228,6 @@ const deadlift: ExerciseAnimation = {
 const HIP_THRUST_SHOULDER = pt(64, 134);
 const hipThrust: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Stringi i glutei',
   pose: (t) => {
     const p = repCurve(t);
@@ -263,7 +252,6 @@ const LEG_PRESS_HIP = pt(92, 146);
 const LEG_PRESS_RAIL = -35;
 const legPress: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['legs'],
   caption: 'Spinta sui talloni',
   pose: (t) => {
     const p = repCurve(t);
@@ -316,7 +304,6 @@ const legPress: ExerciseAnimation = {
 
 const benchPress: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms', 'torso'],
   caption: 'Bilanciere al petto',
   pose: (t) => {
     const p = repCurve(t);
@@ -339,7 +326,6 @@ const PUSHUP_FOOT = pt(46, 166);
 const PUSHUP_HANDS = pt(146, 170);
 const pushups: ExerciseAnimation = {
   durationSeconds: 2.4,
-  highlight: ['arms', 'torso'],
   caption: 'Corpo in linea',
   pose: (t) => {
     const p = repCurve(t);
@@ -360,7 +346,6 @@ const pushups: ExerciseAnimation = {
 const LAT_PULLEY = pt(124, 22);
 const latMachine: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms', 'torso'],
   caption: 'Tira al petto',
   pose: (t) => {
     const p = repCurve(t);
@@ -401,7 +386,6 @@ const latMachine: ExerciseAnimation = {
 
 const row: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms', 'torso'],
   caption: 'Gomiti indietro',
   pose: (t) => {
     const p = repCurve(t);
@@ -416,7 +400,6 @@ const row: ExerciseAnimation = {
 
 const shoulderPress: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms'],
   caption: 'Spinta verticale',
   pose: (t) => {
     const p = repCurve(t);
@@ -450,7 +433,6 @@ function fixedElbowPose(t: number, hip: Point, torsoAngle: number, forearmFrom: 
 
 const bicepsCurl: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms'],
   caption: 'Gomiti fermi',
   pose: (t) => fixedElbowPose(t, pt(120, 106), -90, 88, -70),
   inFront: (s) => <DumbbellsInHands s={s} />
@@ -459,7 +441,6 @@ const bicepsCurl: ExerciseAnimation = {
 const PUSHDOWN_PULLEY = pt(178, 26);
 const tricepsPushdown: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms'],
   caption: 'Gomiti fermi',
   pose: (t) => fixedElbowPose(t, pt(112, 106), -82, -50, 85),
   behind: () => (
@@ -479,7 +460,6 @@ const tricepsPushdown: ExerciseAnimation = {
 
 const lateralRaises: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms'],
   caption: 'Spalle a 90°',
   pose: (t) => {
     const p = repCurve(t);
@@ -505,7 +485,6 @@ const lateralRaises: ExerciseAnimation = {
 const PLANK_FOOT = pt(41, 166);
 const plank: ExerciseAnimation = {
   durationSeconds: 3.6,
-  highlight: ['torso'],
   caption: 'Addome contratto',
   pose: (t) => {
     // Tenuta isometrica: solo un lieve respiro del busto.
@@ -525,7 +504,6 @@ const plank: ExerciseAnimation = {
 
 const russianTwist: ExerciseAnimation = {
   durationSeconds: 2.4,
-  highlight: ['torso'],
   caption: 'Ruota il busto',
   pose: (t) => {
     const swing = Math.sin(2 * Math.PI * t);
@@ -565,7 +543,6 @@ function climberFoot(hip: Point, p: number): Point {
 
 const mountainClimbers: ExerciseAnimation = {
   durationSeconds: 1.0,
-  highlight: ['legs', 'torso'],
   caption: 'Ginocchia al petto',
   pose: (t) => {
     const nearP = repCurve(t);
@@ -588,19 +565,24 @@ const mountainClimbers: ExerciseAnimation = {
   }
 };
 
+/**
+ * Braccia incrociate sul petto: di lato è più leggibile delle mani dietro la testa
+ * (che in vista laterale sembrano "antenne"). Gomito verso l'alto, mano sul petto.
+ */
+const handsOnChest = (shoulder: Point, torsoAngle: number): Point => polar(shoulder, 15, torsoAngle + 155);
+
 const crunch: ExerciseAnimation = {
   durationSeconds: 2.4,
-  highlight: ['torso'],
   caption: 'Solleva le spalle',
   pose: (t) => {
     const hip = pt(122, 165);
     const torsoAngle = lerp(180, 212, repCurve(t));
-    const hands = polar(shoulderOf(hip, torsoAngle), 18, torsoAngle + 20);
+    const hands = handsOnChest(shoulderOf(hip, torsoAngle), torsoAngle);
     return {
       hip,
       torsoAngle,
-      nearArm: goal(hands, -1),
-      farArm: goal(hands, -1),
+      nearArm: goal(hands, 1),
+      farArm: goal(hands, 1),
       nearLeg: goal(pt(160, ANKLE_Y), 1),
       farLeg: goal(pt(155, ANKLE_Y), 1)
     };
@@ -618,7 +600,6 @@ const DECLINE_HIP = pt(128, 124);
 const DECLINE_FEET = pt(176, 136);
 /** Busto appoggiato alla panca (verso la testa) → busto arrotolato verso le ginocchia. */
 const declineTorsoAngle = (p: number): number => lerp(DECLINE_SLOPE + 180, 248, p);
-const handsBehindHead = (shoulder: Point, torsoAngle: number): Point => polar(shoulder, 18, torsoAngle + 20);
 
 const DeclineBench: React.FC = () => {
   const roller = pt(DECLINE_FEET.x + 3, DECLINE_FEET.y - 10);
@@ -638,36 +619,34 @@ const declineLegs = { nearLeg: goal(DECLINE_FEET, 1), farLeg: goal(pt(DECLINE_FE
 
 const declineCrunch: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['torso'],
   caption: 'Arrotola il busto',
   pose: (t) => {
     const torsoAngle = declineTorsoAngle(repCurve(t));
-    const hands = handsBehindHead(shoulderOf(DECLINE_HIP, torsoAngle), torsoAngle);
-    return { hip: DECLINE_HIP, torsoAngle, nearArm: goal(hands, -1), farArm: goal(hands, -1), ...declineLegs };
+    const hands = handsOnChest(shoulderOf(DECLINE_HIP, torsoAngle), torsoAngle);
+    return { hip: DECLINE_HIP, torsoAngle, nearArm: goal(hands, 1), farArm: goal(hands, 1), ...declineLegs };
   },
   behind: () => <DeclineBench />
 };
 
 /**
  * Versione obliqua: salendo il busto ruota e il braccio vicino si allunga
- * verso il ginocchio opposto (in vista laterale: verso le ginocchia).
+ * verso il ginocchio opposto; l'altro braccio resta incrociato sul petto.
  */
+const DECLINE_KNEE = solveTwoBone(DECLINE_HIP, DECLINE_FEET, BODY.thigh, BODY.shin, 1).joint;
 const declineObliqueCrunch: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['torso'],
-  caption: 'Gomito al ginocchio opposto',
+  caption: 'Gomito verso ginocchio',
   pose: (t) => {
     const p = repCurve(t);
-    const torsoAngle = declineTorsoAngle(p * 0.9);
+    const torsoAngle = declineTorsoAngle(p * 0.85);
     const shoulder = shoulderOf(DECLINE_HIP, torsoAngle);
-    const behindHead = handsBehindHead(shoulder, torsoAngle);
-    const towardKnees = polar(shoulder, 44, torsoAngle + 70);
+    const onChest = handsOnChest(shoulder, torsoAngle);
+    const towardKnee = polar(shoulder, 44, (Math.atan2(DECLINE_KNEE.y - shoulder.y, DECLINE_KNEE.x - shoulder.x) * 180) / Math.PI);
     return {
       hip: DECLINE_HIP,
       torsoAngle,
-      neckOffset: 10 * p,
-      nearArm: goal(lerpPoint(behindHead, towardKnees, p), -1),
-      farArm: goal(behindHead, -1),
+      nearArm: goal(lerpPoint(onChest, towardKnee, p), 1),
+      farArm: goal(onChest, 1),
       ...declineLegs
     };
   },
@@ -676,7 +655,6 @@ const declineObliqueCrunch: ExerciseAnimation = {
 
 const kettlebellSwing: ExerciseAnimation = {
   durationSeconds: 2.0,
-  highlight: ['legs', 'torso'],
   caption: "Spinta d'anca",
   pose: (t) => {
     const p = repCurve(t);
@@ -732,14 +710,12 @@ const BURPEE_JUMP: PoseSpec = {
 };
 const burpees: ExerciseAnimation = {
   durationSeconds: 3.6,
-  highlight: ['legs', 'torso'],
   caption: 'Ritmo costante',
   pose: (t) => keyframePose(t, [BURPEE_STAND, BURPEE_BEND, BURPEE_SQUAT, BURPEE_PLANK, BURPEE_SQUAT, BURPEE_JUMP])
 };
 
 const jumpingJacks: ExerciseAnimation = {
   durationSeconds: 1.2,
-  highlight: ['legs', 'arms'],
   caption: 'Salta e apri',
   pose: (t) => {
     const p = repCurve(t);
@@ -754,6 +730,202 @@ const jumpingJacks: ExerciseAnimation = {
       farArm: goal(polar(pt(shoulder.x + 13, shoulder.y), 47.5, lerp(80, -65, p)), 1),
       nearLeg: goal(pt(lerp(122, 102, p), ANKLE_Y), -1),
       farLeg: goal(pt(lerp(138, 158, p), ANKLE_Y), 1)
+    };
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Addome sul tappetino (supini, testa a sinistra, piedi a destra)
+// ---------------------------------------------------------------------------
+
+const MAT_HIP = pt(124, 165);
+
+/**
+ * Gamba descritta con angoli invece che con il bersaglio del piede:
+ * `thighAngle` = direzione anca→ginocchio, `kneeFlexion` = rotazione della tibia
+ * rispetto alla coscia (0 = gamba tesa). Con flessione positiva il ginocchio
+ * sporge dal lato bend = 1, coerente con le altre pose.
+ */
+function legFromAngles(hip: Point, thighAngle: number, kneeFlexion: number): LimbGoal {
+  const knee = polar(hip, BODY.thigh, thighAngle);
+  return goal(polar(knee, BODY.shin, thighAngle + kneeFlexion), 1);
+}
+
+/** Braccia tese lungo i fianchi, appoggiate a terra verso il bacino. */
+function armsAlongBody(hip: Point, torsoAngle: number): { nearArm: LimbGoal; farArm: LimbGoal } {
+  const shoulder = shoulderOf(hip, torsoAngle);
+  const towardFloor = Math.atan2(170 - shoulder.y, 45) * 180 / Math.PI;
+  return {
+    nearArm: goal(polar(shoulder, 46, towardFloor), 1),
+    farArm: goal(polar(shoulder, 45, towardFloor - 2), 1)
+  };
+}
+
+/** Busto supino: 180 = appoggiato a terra, valori maggiori = spalle sollevate. */
+const matHandsBehindHead = (torsoAngle: number): Point => polar(shoulderOf(MAT_HIP, torsoAngle), 18, torsoAngle + 20);
+
+const legRaises: ExerciseAnimation = {
+  durationSeconds: 3.0,
+  caption: 'Schiena a terra',
+  pose: (t) => {
+    const p = repCurve(t);
+    const thighAngle = lerp(-4, -88, p);
+    return {
+      hip: MAT_HIP,
+      torsoAngle: 180,
+      ...armsAlongBody(MAT_HIP, 180),
+      nearLeg: legFromAngles(MAT_HIP, thighAngle, 2),
+      farLeg: legFromAngles(MAT_HIP, thighAngle - 3, 2),
+      nearFootAngle: thighAngle - 80,
+      farFootAngle: thighAngle - 83
+    };
+  }
+};
+
+const reverseCrunch: ExerciseAnimation = {
+  durationSeconds: 2.6,
+  caption: 'Bacino verso il petto',
+  pose: (t) => {
+    const p = repCurve(t);
+    // Il bacino si arrotola e si stacca un poco da terra.
+    const hip = pt(lerp(124, 118, p), lerp(165, 157, p));
+    const thighAngle = lerp(-80, -135, p);
+    return {
+      hip,
+      torsoAngle: lerp(180, 172, p),
+      ...armsAlongBody(hip, lerp(180, 172, p)),
+      nearLeg: legFromAngles(hip, thighAngle, 85),
+      farLeg: legFromAngles(hip, thighAngle - 4, 85),
+      nearFootAngle: thighAngle,
+      farFootAngle: thighAngle
+    };
+  }
+};
+
+/** Pedalata: una gamba al petto, l'altra distesa; si alternano in modo continuo. */
+function bicycleLeg(hip: Point, phase: number): LimbGoal {
+  const bend = (1 + Math.cos(phase)) / 2; // 1 = ginocchio al petto, 0 = gamba distesa
+  return legFromAngles(hip, lerp(-22, -110, bend), lerp(4, 115, bend));
+}
+
+const bicycleCrunch: ExerciseAnimation = {
+  durationSeconds: 1.6,
+  caption: 'Gomito verso ginocchio',
+  pose: (t) => {
+    const phase = 2 * Math.PI * t;
+    const torsoAngle = 205 + 4 * Math.sin(phase);
+    const hands = matHandsBehindHead(torsoAngle);
+    return {
+      hip: MAT_HIP,
+      torsoAngle,
+      nearArm: goal(hands, -1),
+      farArm: goal(hands, -1),
+      nearLeg: bicycleLeg(MAT_HIP, phase),
+      farLeg: bicycleLeg(MAT_HIP, phase + Math.PI)
+    };
+  }
+};
+
+const deadBug: ExerciseAnimation = {
+  durationSeconds: 3.2,
+  caption: 'Lombare a terra',
+  pose: (t) => {
+    // Prima metà: braccio vicino e gamba lontana si allungano; seconda metà: il contrario.
+    const nearReach = Math.max(0, Math.sin(2 * Math.PI * t));
+    const farReach = Math.max(0, -Math.sin(2 * Math.PI * t));
+    const shoulder = shoulderOf(MAT_HIP, 180);
+    const armAngle = (reach: number) => lerp(-90, -170, reach); // dal soffitto a dietro la testa
+    const leg = (reach: number) => legFromAngles(MAT_HIP, lerp(-80, -8, reach), lerp(85, 3, reach));
+    return {
+      hip: MAT_HIP,
+      torsoAngle: 180,
+      nearArm: goal(polar(shoulder, 46, armAngle(nearReach)), -1),
+      farArm: goal(polar(shoulder, 46, armAngle(farReach)), -1),
+      nearLeg: leg(farReach),
+      farLeg: leg(nearReach)
+    };
+  }
+};
+
+const flutterKicks: ExerciseAnimation = {
+  durationSeconds: 0.8,
+  caption: 'Piccoli e veloci',
+  pose: (t) => {
+    const swing = 9 * Math.sin(2 * Math.PI * t);
+    return {
+      hip: MAT_HIP,
+      torsoAngle: 192,
+      ...armsAlongBody(MAT_HIP, 192),
+      nearLeg: legFromAngles(MAT_HIP, -16 + swing, 2),
+      farLeg: legFromAngles(MAT_HIP, -16 - swing, 2),
+      nearFootAngle: -16 + swing - 70,
+      farFootAngle: -16 - swing - 70
+    };
+  }
+};
+
+const hollowHold: ExerciseAnimation = {
+  durationSeconds: 3.6,
+  caption: 'Corpo a barchetta',
+  pose: (t) => {
+    // Tenuta isometrica: solo un lieve respiro.
+    const breath = 2 * repCurve(t);
+    const torsoAngle = 200 - breath;
+    const shoulder = shoulderOf(MAT_HIP, torsoAngle);
+    const hands = polar(shoulder, 46, torsoAngle + 6);
+    return {
+      hip: MAT_HIP,
+      torsoAngle,
+      nearArm: goal(hands, -1),
+      farArm: goal(pt(hands.x + 2, hands.y + 2), -1),
+      nearLeg: legFromAngles(MAT_HIP, -18 + breath, 2),
+      farLeg: legFromAngles(MAT_HIP, -20 + breath, 2),
+      nearFootAngle: -90,
+      farFootAngle: -92
+    };
+  }
+};
+
+const vUps: ExerciseAnimation = {
+  durationSeconds: 2.6,
+  caption: 'Mani ai piedi',
+  pose: (t) => {
+    const p = repCurve(t);
+    const hip = pt(124, lerp(165, 167, p));
+    const torsoAngle = lerp(180, 236, p);
+    const legAngle = lerp(-2, -56, p);
+    const shoulder = shoulderOf(hip, torsoAngle);
+    // Braccia da distese dietro la testa a tese verso i piedi, passando sopra
+    // la testa (da 180° a 330°, cioè verso l'alto) e mai attraverso il pavimento.
+    const hands = polar(shoulder, 46, lerp(180, 330, p));
+    return {
+      hip,
+      torsoAngle,
+      nearArm: goal(hands, -1),
+      farArm: goal(pt(hands.x - 2, hands.y + 2), -1),
+      nearLeg: legFromAngles(hip, legAngle, 2),
+      farLeg: legFromAngles(hip, legAngle - 3, 2),
+      nearFootAngle: legAngle - 80,
+      farFootAngle: legAngle - 83
+    };
+  }
+};
+
+const heelTouches: ExerciseAnimation = {
+  durationSeconds: 1.8,
+  caption: 'Spalle sollevate',
+  pose: (t) => {
+    const torsoAngle = 200;
+    const shoulder = shoulderOf(MAT_HIP, torsoAngle);
+    // La mano del lato che si piega scivola verso il tallone; l'altra torna indietro.
+    const reach = (p: number) => polar(shoulder, 46, lerp(20, 6, p));
+    return {
+      hip: MAT_HIP,
+      torsoAngle,
+      nearArm: goal(reach(Math.max(0, Math.sin(2 * Math.PI * t))), 1),
+      farArm: goal(reach(Math.max(0, -Math.sin(2 * Math.PI * t))), 1),
+      nearLeg: goal(pt(162, ANKLE_Y), 1),
+      farLeg: goal(pt(157, ANKLE_Y), 1)
     };
   }
 };
@@ -782,7 +954,6 @@ function runningHand(shoulder: Point, upperArmAngle: number): Point {
 
 const treadmill: ExerciseAnimation = {
   durationSeconds: 1.0,
-  highlight: ['legs'],
   caption: 'Pendenza 6%',
   pose: (t) => {
     const phase = 2 * Math.PI * t;
@@ -832,7 +1003,6 @@ const bikePedal = (t: number, offsetDeg: number): Point => polar(BIKE_CRANK, BIK
 
 const stationaryBike: ExerciseAnimation = {
   durationSeconds: 0.9,
-  highlight: ['legs'],
   caption: 'Cadenza 80 RPM',
   pose: (t) => ({
     hip: BIKE_HIP,
@@ -873,6 +1043,61 @@ const stationaryBike: ExerciseAnimation = {
   }
 };
 
+/**
+ * Cyclette orizzontale: seduti con schiena appoggiata allo schienale reclinato,
+ * pedali davanti all'altezza del bacino.
+ */
+const RECUMBENT_HIP = pt(96, 138);
+const RECUMBENT_CRANK = pt(148, 140);
+const RECUMBENT_TORSO = -115;
+const recumbentPedal = (t: number, offsetDeg: number): Point => polar(RECUMBENT_CRANK, 14, 360 * t + offsetDeg);
+
+const recumbentBike: ExerciseAnimation = {
+  durationSeconds: 0.9,
+  caption: 'Schiena appoggiata',
+  pose: (t) => {
+    const handles = pt(RECUMBENT_HIP.x + 6, RECUMBENT_HIP.y - 2);
+    return {
+      hip: RECUMBENT_HIP,
+      torsoAngle: RECUMBENT_TORSO,
+      nearArm: goal(handles, -1),
+      farArm: goal(pt(handles.x - 3, handles.y), -1),
+      nearLeg: goal(recumbentPedal(t, 0), 1),
+      farLeg: goal(recumbentPedal(t, 180), 1),
+      nearFootAngle: -80,
+      farFootAngle: -80
+    };
+  },
+  behind: (s, t) => {
+    const backrestOffset = RECUMBENT_TORSO - 90; // dietro la schiena
+    const backBottom = polar(s.hip, 9, backrestOffset);
+    const backTop = polar(s.shoulder, 9, backrestOffset);
+    const farPedal = recumbentPedal(t, 180);
+    return (
+      <g>
+        <line x1="50" y1="172" x2="196" y2="172" style={{ stroke: COLORS.equipmentDark }} strokeWidth="6" strokeLinecap="round" />
+        <line x1={backBottom.x} y1={backBottom.y} x2={backTop.x} y2={backTop.y} style={{ stroke: COLORS.equipment }} strokeWidth="9" strokeLinecap="round" />
+        <rect x="76" y="144" width="40" height="8" rx="4" style={{ fill: COLORS.equipment }} />
+        <line x1="96" y1="152" x2="96" y2="172" style={{ stroke: COLORS.equipmentDark }} strokeWidth="6" />
+        <line x1="96" y1="160" x2={RECUMBENT_CRANK.x} y2={RECUMBENT_CRANK.y + 4} style={{ stroke: COLORS.equipmentDark }} strokeWidth="7" strokeLinecap="round" />
+        <circle cx={RECUMBENT_CRANK.x} cy={RECUMBENT_CRANK.y} r="20" style={{ fill: COLORS.equipmentDark, stroke: COLORS.equipment }} strokeWidth="3" />
+        <line x1={RECUMBENT_CRANK.x + 10} y1={RECUMBENT_CRANK.y - 14} x2="172" y2="96" style={{ stroke: COLORS.equipment }} strokeWidth="5" strokeLinecap="round" />
+        <rect x="162" y="84" width="26" height="15" rx="3" style={{ fill: COLORS.equipmentDark, stroke: COLORS.accent }} strokeWidth="1.5" />
+        <line x1={RECUMBENT_CRANK.x} y1={RECUMBENT_CRANK.y} x2={farPedal.x} y2={farPedal.y} style={{ stroke: COLORS.equipment }} strokeWidth="4" />
+      </g>
+    );
+  },
+  inFront: (_s, t) => {
+    const nearPedal = recumbentPedal(t, 0);
+    return (
+      <g>
+        <line x1={RECUMBENT_CRANK.x} y1={RECUMBENT_CRANK.y} x2={nearPedal.x} y2={nearPedal.y} style={{ stroke: COLORS.equipmentLight }} strokeWidth="4" strokeLinecap="round" />
+        <circle cx={RECUMBENT_CRANK.x} cy={RECUMBENT_CRANK.y} r="5" style={{ fill: COLORS.equipmentLight }} />
+      </g>
+    );
+  }
+};
+
 const ELLIPTICAL_PEDAL_CENTER = pt(122, 156);
 const ELLIPTICAL_HANDLE_PIVOT = pt(172, 140);
 const ELLIPTICAL_FLYWHEEL = pt(52, 152);
@@ -883,7 +1108,6 @@ const ellipticalGrip = (phase: number, sign: number): Point =>
 
 const elliptical: ExerciseAnimation = {
   durationSeconds: 1.4,
-  highlight: ['legs', 'arms'],
   caption: 'Spingi e tira',
   pose: (t) => {
     const phase = 2 * Math.PI * t;
@@ -940,7 +1164,6 @@ function stairFoot(phase: number): Point {
 
 const stairClimber: ExerciseAnimation = {
   durationSeconds: 1.3,
-  highlight: ['legs'],
   caption: 'Spinta sul tallone',
   pose: (t) => {
     const phase = 2 * Math.PI * t;
@@ -993,7 +1216,6 @@ const stairClimber: ExerciseAnimation = {
 /** Usata per svgType senza animazione dedicata (es. esercizi futuri). */
 const genericStanding: ExerciseAnimation = {
   durationSeconds: 2.8,
-  highlight: ['arms'],
   pose: (t) => {
     const p = repCurve(t);
     const hip = pt(130, 106);
@@ -1035,11 +1257,20 @@ export const ANIMATIONS: Record<string, ExerciseAnimation> = {
   crunch,
   decline_crunch: declineCrunch,
   decline_oblique_crunch: declineObliqueCrunch,
+  leg_raises: legRaises,
+  reverse_crunch: reverseCrunch,
+  bicycle_crunch: bicycleCrunch,
+  dead_bug: deadBug,
+  flutter_kicks: flutterKicks,
+  hollow_hold: hollowHold,
+  v_ups: vUps,
+  heel_touches: heelTouches,
   kettlebell_swing: kettlebellSwing,
   burpees,
   jumping_jacks: jumpingJacks,
   treadmill,
   stationary_bike: stationaryBike,
+  recumbent_bike: recumbentBike,
   elliptical,
   stair_climber: stairClimber
 };

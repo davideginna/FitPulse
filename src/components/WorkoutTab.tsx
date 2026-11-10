@@ -6,9 +6,18 @@ import {
   Plus, 
   Sparkles
 } from 'lucide-react';
-import { Routine } from '../types';
+import { GoalId, Routine } from '../types';
 import { EXERCISES } from '../data/exercises';
-import { getUserStats } from '../utils/storage';
+import { TRAINING_GOALS, getGoal } from '../data/goals';
+import { getUserStats, getSelectedGoal, saveSelectedGoal } from '../utils/storage';
+
+/**
+ * Nome breve per le pillole delle schede: prime due parole, senza la parte tra
+ * parentesi (es. "Crunch Bicicletta" invece di solo "Crunch", che sarebbe ambiguo).
+ */
+function shortExerciseName(name: string): string {
+  return name.split('(')[0].trim().split(' ').slice(0, 2).join(' ');
+}
 
 /** Esercizi mostrati nella scheda prima di "+N altri". */
 const PREVIEW_COUNT = 4;
@@ -36,9 +45,48 @@ export const WorkoutTab: React.FC<Props> = ({
     );
   };
   const userStats = getUserStats();
+  const [selectedGoal, setSelectedGoal] = useState<GoalId>(() => getSelectedGoal());
+  const [showAllRoutines, setShowAllRoutines] = useState(false);
+  const goal = getGoal(selectedGoal);
+
+  const chooseGoal = (id: GoalId) => {
+    setSelectedGoal(id);
+    saveSelectedGoal(id);
+    setShowAllRoutines(false);
+  };
+
+  // Schede dell'obiettivo scelto; quelle senza `goals` (create dall'utente) si vedono sempre.
+  const goalRoutines = routines.filter((r) => !r.goals || r.goals.includes(selectedGoal));
+  const visibleRoutines = showAllRoutines ? routines : goalRoutines;
+  const hiddenRoutinesCount = routines.length - goalRoutines.length;
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Selettore obiettivo */}
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Il tuo obiettivo</p>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
+          {TRAINING_GOALS.map((g) => {
+            const isActive = g.id === selectedGoal;
+            return (
+              <button
+                key={g.id}
+                onClick={() => chooseGoal(g.id)}
+                aria-pressed={isActive}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition active:scale-95 ${
+                  isActive
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <span aria-hidden="true">{g.emoji}</span>
+                {g.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Hero Goal Card */}
       <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-slate-900 to-cyan-950 rounded-3xl p-5 border border-emerald-500/30 shadow-2xl">
         <div className="absolute top-0 right-0 -mr-6 -mt-6 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -49,10 +97,10 @@ export const WorkoutTab: React.FC<Props> = ({
         </div>
 
         <h1 className="text-xl font-black text-white leading-tight mb-1">
-          Perdere Peso & Sgonfiare la Pancia
+          {goal.title}
         </h1>
         <p className="text-xs text-slate-300 leading-relaxed mb-4 max-w-sm">
-          Schede basate su multiarticolari pesanti, contrazione del trasverso addominale e recuperi calibrati per massimizzare il deficit calorico.
+          {goal.description}
         </p>
 
         {/* Quick Stats Pill */}
@@ -76,7 +124,9 @@ export const WorkoutTab: React.FC<Props> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-extrabold text-white">Schede Consigliate</h2>
-          <p className="text-xs text-slate-400">Programmi scientifici ad alta intensità metabolica</p>
+          <p className="text-xs text-slate-400">
+            {showAllRoutines ? 'Tutte le schede disponibili' : `${goalRoutines.length} schede per: ${goal.label}`}
+          </p>
         </div>
         <button
           onClick={onOpenBuilder}
@@ -89,7 +139,7 @@ export const WorkoutTab: React.FC<Props> = ({
 
       {/* Routine Cards List */}
       <div className="space-y-3.5">
-        {routines.map((routine) => {
+        {visibleRoutines.map((routine) => {
           const isExpanded = expandedRoutineIds.includes(routine.id);
           const visibleExercises = isExpanded ? routine.exercises : routine.exercises.slice(0, PREVIEW_COUNT);
           const hiddenCount = routine.exercises.length - PREVIEW_COUNT;
@@ -139,7 +189,7 @@ export const WorkoutTab: React.FC<Props> = ({
                     onClick={() => ex && onSelectExercisePreview(ex.id)}
                     className="text-[10px] bg-slate-950 border border-slate-800/80 hover:border-slate-700 text-slate-300 px-2.5 py-1 rounded-lg font-medium transition active:scale-95 flex items-center gap-1"
                   >
-                    <span>{ex?.name.split(' ')[0]}</span>
+                    <span>{ex ? shortExerciseName(ex.name) : ''}</span>
                     <span className="text-emerald-400 font-bold">{item.sets}x{item.reps}</span>
                   </button>
                 );
@@ -175,6 +225,15 @@ export const WorkoutTab: React.FC<Props> = ({
           );
         })}
       </div>
+
+      {hiddenRoutinesCount > 0 && (
+        <button
+          onClick={() => setShowAllRoutines(!showAllRoutines)}
+          className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-xs font-bold text-slate-300 hover:text-white hover:border-slate-600 transition"
+        >
+          {showAllRoutines ? `Mostra solo le schede per ${goal.label}` : `Mostra tutte le schede (+${hiddenRoutinesCount})`}
+        </button>
+      )}
 
       {/* Routine Detail Modal */}
       {selectedRoutinePreview && (
