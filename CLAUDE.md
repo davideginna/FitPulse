@@ -17,7 +17,7 @@ npm run check:figures  # verifies every exercise animation (bone lengths constan
 
 No test runner, linter, or formatter. Verification = `npm run check:figures` + `npm run build` (`tsc -b` with `noUnusedLocals`/`noUnusedParameters`). `check:figures` bundles `scripts/checkFigures.ts` with esbuild (a Vite dependency) and runs it with Node.
 
-Deploy: `.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to `main` (repo `davideginna/pt`). It sets `BASE_PATH=/<repo>/`, read by `vite.config.ts` as Vite `base`; locally base is `/`. Never hardcode absolute asset paths — use paths Vite rewrites (index.html, imports, `public/`).
+Deploy: `.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to `main` (repo `davideginna/FitPulse`). It sets `BASE_PATH=/<repo>/`, read by `vite.config.ts` as Vite `base`; locally base is `/`. Never hardcode absolute asset paths — use paths Vite rewrites (index.html, imports, `public/`).
 
 The app must be served over HTTP (not opened via `file://`), otherwise the service worker/scripts fail and the page is blank.
 

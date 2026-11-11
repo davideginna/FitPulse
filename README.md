@@ -31,7 +31,7 @@ L'app sarà accessibile su:
 
 ### 🌐 Versione online
 Ogni push sul branch `main` pubblica automaticamente l'app su GitHub Pages (workflow `.github/workflows/deploy.yml`):
-**https://davideginna.github.io/pt/**
+**https://davideginna.github.io/FitPulse/**
 
 ---
 

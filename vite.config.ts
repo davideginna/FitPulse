@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Percorso base del sito. In locale è "/"; su GitHub Pages l'app è servita da
-// https://<utente>.github.io/pt/, quindi il workflow di deploy imposta BASE_PATH=/pt/.
+// https://<utente>.github.io/FitPulse/, quindi il workflow di deploy imposta BASE_PATH=/FitPulse/.
 const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
