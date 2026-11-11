@@ -190,3 +190,23 @@ export function saveSelectedGoal(goal: GoalId): void {
     console.error('Error saving selected goal', e);
   }
 }
+
+// --- Ultima versione del changelog vista (pallino sul pulsante "Novità") ---
+
+const LAST_SEEN_CHANGELOG_KEY = 'fitpulse_last_seen_changelog';
+
+export function getLastSeenChangelogVersion(): string | null {
+  try {
+    return localStorage.getItem(LAST_SEEN_CHANGELOG_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastSeenChangelogVersion(version: string): void {
+  try {
+    localStorage.setItem(LAST_SEEN_CHANGELOG_KEY, version);
+  } catch (e) {
+    console.error('Error saving last seen changelog version', e);
+  }
+}

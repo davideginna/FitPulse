@@ -8,11 +8,13 @@ import { ActiveWorkoutView } from './components/ActiveWorkoutView';
 import { ExerciseDetailModal } from './components/ExerciseDetailModal';
 import { RoutineBuilderModal } from './components/RoutineBuilderModal';
 import { ThemePicker } from './components/ThemePicker';
+import { ChangelogSheet } from './components/ChangelogSheet';
+import { LATEST_VERSION } from './utils/changelog';
 import { useFreeTimer } from './hooks/useFreeTimer';
 import { Routine, Exercise } from './types';
-import { getAllRoutines } from './utils/storage';
+import { getAllRoutines, getLastSeenChangelogVersion, saveLastSeenChangelogVersion } from './utils/storage';
 import { EXERCISES } from './data/exercises';
-import { Flame, Download, WifiOff } from 'lucide-react';
+import { Flame, Download, WifiOff, Megaphone } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('workout');
@@ -25,6 +27,15 @@ export const App: React.FC = () => {
   // Il timer della tab "Timer" vive qui (non in FreeTimerTab) perché la tab viene
   // smontata quando si cambia tab: così continua a scorrere e a suonare ovunque.
   const freeTimer = useFreeTimer();
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  // Pallino sul pulsante "Novità" finché l'utente non ha visto l'ultima versione.
+  const [hasUnseenChanges, setHasUnseenChanges] = useState(() => getLastSeenChangelogVersion() !== LATEST_VERSION);
+
+  const openChangelog = () => {
+    setIsChangelogOpen(true);
+    setHasUnseenChanges(false);
+    saveLastSeenChangelogVersion(LATEST_VERSION);
+  };
 
   // Monitor online / offline status for PWA
   useEffect(() => {
@@ -136,6 +147,10 @@ export const App: React.FC = () => {
                 <span>Installa</span>
               </button>
             )}
+            <button onClick={openChangelog} className="icon-btn relative" aria-label="Novità dell'app" title="Novità">
+              <Megaphone className="w-5 h-5" />
+              {hasUnseenChanges && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error" aria-hidden="true" />}
+            </button>
             <ThemePicker />
           </div>
         </div>
@@ -182,6 +197,8 @@ export const App: React.FC = () => {
           }}
         />
       )}
+
+      {isChangelogOpen && <ChangelogSheet onClose={() => setIsChangelogOpen(false)} />}
 
       {/* Bottom Navigation */}
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} isTimerRunning={freeTimer.isAnyRunning} />

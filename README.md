@@ -70,6 +70,10 @@ Ogni push sul branch `main` pubblica automaticamente l'app su GitHub Pages (work
 ### 6. 🎨 Temi
 Pulsante tavolozza in alto a destra: Smeraldo, Oceano, Tramonto, Viola, Carbone (nero OLED) e Chiaro. La scelta viene ricordata sul dispositivo.
 
+## Novità
+
+Le modifiche di ogni versione sono in [CHANGELOG.md](CHANGELOG.md), visibile anche nell'app (icona megafono in alto).
+
 ## Licenza
 
 [MIT](LICENSE) © 2026 davideginna
