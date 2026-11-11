@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Flame, Clock, RotateCcw, ChevronRight, Dumbbell } from 'lucide-react';
+import { Search, Flame, Clock, RotateCcw, Dumbbell, X } from 'lucide-react';
 import { Exercise } from '../types';
 import { EXERCISES, MUSCLE_GROUPS } from '../data/exercises';
 import { ExerciseIllustration } from './ExerciseIllustration';
@@ -21,135 +21,93 @@ export const ExerciseLibraryTab: React.FC<Props> = ({ onSelectExercise }) => {
     return matchesCategory && matchesSearch;
   });
 
+  const categoryChip = (category: string, label: string) => (
+    <button
+      key={category}
+      onClick={() => setSelectedCategory(category)}
+      aria-pressed={selectedCategory === category}
+      className={selectedCategory === category ? 'chip-selected' : 'chip'}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="space-y-4 pb-24">
-      {/* Header */}
       <div>
-        <h1 className="text-xl font-black text-white">Libreria Esercizi</h1>
-        <p className="text-xs text-slate-400">
-          Guida visiva, ripetizioni consigliate e recuperi per ogni gruppo muscolare
-        </p>
+        <h1 className="text-2xl font-semibold text-on-surface">Esercizi</h1>
+        <p className="text-sm text-on-surface-variant">Guida visiva, ripetizioni e recuperi consigliati</p>
       </div>
 
-      {/* Search Input */}
+      {/* Barra di ricerca M3 */}
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+        <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input
           type="text"
-          placeholder="Cerca esercizio (es. squat, addome, panca)..."
+          placeholder="Cerca (es. squat, addome, panca)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 shadow-inner"
+          className="w-full h-14 rounded-full bg-surface-container-high pl-12 pr-12 text-base text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3.5 top-3 text-xs text-slate-400 p-1"
+            className="icon-btn absolute right-2 top-1/2 -translate-y-1/2"
+            aria-label="Cancella ricerca"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         )}
       </div>
 
-      {/* Category Pills Slider */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setSelectedCategory('Tutti')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition active:scale-95 ${
-            selectedCategory === 'Tutti'
-              ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Tutti ({EXERCISES.length})
-        </button>
-        {MUSCLE_GROUPS.map((cat) => {
-          const count = EXERCISES.filter((e) => e.category === cat).length;
-          return (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition active:scale-95 ${
-                selectedCategory === cat
-                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {cat} ({count})
-            </button>
-          );
-        })}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
+        {categoryChip('Tutti', `Tutti (${EXERCISES.length})`)}
+        {MUSCLE_GROUPS.map((cat) => categoryChip(cat, `${cat} (${EXERCISES.filter((e) => e.category === cat).length})`))}
       </div>
 
-      {/* Exercise Cards Grid */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 bg-slate-900/50 rounded-3xl border border-slate-800">
-            <Dumbbell className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-300">Nessun esercizio trovato</p>
-            <p className="text-xs text-slate-500 mt-1">Prova a cambiare termine di ricerca</p>
+          <div className="card text-center py-12">
+            <Dumbbell className="w-10 h-10 text-on-surface-variant mx-auto mb-2" />
+            <p className="text-sm font-semibold text-on-surface">Nessun esercizio trovato</p>
+            <p className="text-sm text-on-surface-variant mt-1">Prova a cambiare termine di ricerca</p>
           </div>
         ) : (
           filtered.map((exercise) => (
-            <div
+            <button
               key={exercise.id}
               onClick={() => onSelectExercise(exercise)}
-              className="bg-slate-900/90 border border-slate-800/80 hover:border-emerald-500/40 rounded-3xl p-4 transition-all shadow-md active:scale-99 cursor-pointer group"
+              className="card w-full text-left p-3 flex gap-3 hover:bg-surface-container-high transition-colors"
             >
-              <div className="flex gap-3.5">
-                {/* Visual Thumbnail */}
-                <div className="w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                  <ExerciseIllustration
-                    exercise={exercise}
-                    isAnimated={false}
-                    compact={true}
-                    className="w-full h-full p-1"
-                  />
+              <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
+                <ExerciseIllustration exercise={exercise} isAnimated={false} compact={true} className="w-full h-full p-1" />
+              </div>
+
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div>
+                  <p className="text-xs text-on-surface-variant">
+                    {exercise.category} · {exercise.equipment}
+                  </p>
+                  <h3 className="text-base font-semibold text-on-surface leading-snug line-clamp-2">{exercise.name}</h3>
+                  <p className="text-xs text-on-surface-variant line-clamp-2 mt-0.5">{exercise.description}</p>
                 </div>
 
-                {/* Details */}
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-emerald-400">
-                        {exercise.category}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        {exercise.equipment}
-                      </span>
-                    </div>
-
-                    <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-300 transition line-clamp-2 mt-0.5">
-                      {exercise.name}
-                    </h3>
-
-                    <p className="text-[11px] text-slate-400 line-clamp-3 mt-0.5">
-                      {exercise.description}
-                    </p>
-                  </div>
-
-                  {/* Recommended Reps and Rest metrics */}
-                  <div className="flex items-center space-x-3 text-[11px] pt-1">
-                    <div className="flex items-center space-x-1 text-slate-300">
-                      <RotateCcw className="w-3 h-3 text-cyan-400" />
-                      <span className="font-bold">{exercise.recommendedReps}</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-slate-300">
-                      <Clock className="w-3 h-3 text-emerald-400" />
-                      <span className="font-bold text-emerald-400">{exercise.recommendedRestSeconds}s</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-slate-400">
-                      <Flame className="w-3 h-3 text-orange-400" />
-                      <span>{exercise.calorieBurnRating}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center text-slate-600 group-hover:text-emerald-400 transition">
-                  <ChevronRight className="w-5 h-5" />
+                <div className="flex items-center gap-3 text-xs text-on-surface-variant pt-1.5">
+                  <span className="flex items-center gap-1">
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    {exercise.recommendedReps}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {exercise.recommendedRestSeconds}s
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5" />
+                    {exercise.calorieBurnRating}
+                  </span>
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>

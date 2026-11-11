@@ -22,44 +22,29 @@ export const ConfirmModal: React.FC<Props> = ({ title, message, confirmLabel, on
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onCancel]);
 
+  // Dialog M3: icona, titolo, testo e azioni testuali allineate a destra.
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
-      onClick={onCancel}
-    >
+    <div className="scrim flex items-center justify-center p-6 animate-in fade-in" onClick={onCancel}>
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
         aria-describedby="confirm-modal-message"
-        className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl"
+        className="dialog w-full max-w-sm text-center"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start gap-3 mb-5">
-          <div className="p-2.5 rounded-2xl bg-red-500/15 text-red-400 flex-shrink-0">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 id="confirm-modal-title" className="text-base font-extrabold text-white">
-              {title}
-            </h3>
-            <p id="confirm-modal-message" className="text-xs text-slate-400 mt-1 leading-relaxed">
-              {message}
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={onCancel}
-            autoFocus
-            className="py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold active:scale-95 transition"
-          >
+        <AlertTriangle className="w-6 h-6 mx-auto text-error" />
+        <h3 id="confirm-modal-title" className="text-2xl font-normal text-on-surface mt-4">
+          {title}
+        </h3>
+        <p id="confirm-modal-message" className="text-sm text-on-surface-variant mt-4 leading-relaxed text-left">
+          {message}
+        </p>
+        <div className="flex justify-end gap-2 mt-6">
+          <button onClick={onCancel} autoFocus className="btn-text">
             Annulla
           </button>
-          <button
-            onClick={onConfirm}
-            className="py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold active:scale-95 transition"
-          >
+          <button onClick={onConfirm} className="btn-text text-error hover:bg-error/10">
             {confirmLabel}
           </button>
         </div>

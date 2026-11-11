@@ -18,9 +18,10 @@ export const Navbar: React.FC<Props> = ({ activeTab, onTabChange, isTimerRunning
     { id: 'progress' as TabType, label: 'Guida & Dati', icon: TrendingUp }
   ];
 
+  // Barra di navigazione M3: indicatore a pillola dietro l'icona della tab attiva.
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800/90 px-3 py-2 pb-safe">
-      <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface-container pb-safe">
+      <div className="max-w-md mx-auto grid grid-cols-4 h-20">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -29,22 +30,27 @@ export const Navbar: React.FC<Props> = ({ activeTab, onTabChange, isTimerRunning
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all ${
-                isActive
-                  ? 'text-emerald-400 font-bold bg-emerald-500/10'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className="group flex flex-col items-center justify-center gap-1"
+              aria-current={isActive ? 'page' : undefined}
             >
-              <span className="relative flex">
-                <Icon className={`w-5 h-5 mb-0.5 transition-transform ${isActive ? 'scale-110 stroke-[2.5]' : ''}`} />
+              <span
+                className={`relative flex items-center justify-center w-16 h-8 rounded-full transition-colors ${
+                  isActive
+                    ? 'bg-secondary-container text-on-secondary-container'
+                    : 'text-on-surface-variant group-hover:bg-on-surface/8'
+                }`}
+              >
+                <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.25]' : ''}`} />
                 {showTimerBadge && (
                   <span
-                    className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse"
+                    className="absolute top-0.5 right-4 w-2 h-2 rounded-full bg-error animate-pulse"
                     aria-label="Timer in corso"
                   />
                 )}
               </span>
-              <span className="text-[10px] tracking-tight">{tab.label}</span>
+              <span className={`text-xs ${isActive ? 'font-bold text-on-surface' : 'font-medium text-on-surface-variant'}`}>
+                {tab.label}
+              </span>
             </button>
           );
         })}

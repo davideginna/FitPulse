@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Trophy, 
-  Calendar, 
-  ChevronRight, 
-  Scale, 
-  BookOpen, 
-  CheckCircle,
-  Trash2
-} from 'lucide-react';
+import { Trophy, ChevronDown, Scale, CheckCircle, Trash2, Pencil } from 'lucide-react';
 import { FAT_LOSS_PILLARS } from '../data/fatLossGuide';
 import {
   getWorkoutHistory,
@@ -61,130 +53,105 @@ export const ProgressGuideTab: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24">
-      {/* Header */}
       <div>
-        <h1 className="text-xl font-black text-white">Progresso & Guida Dimagrimento</h1>
-        <p className="text-xs text-slate-400">
-          Monitora i tuoi risultati e impara la scienza per eliminare la pancia
-        </p>
+        <h1 className="text-2xl font-semibold text-on-surface">Progressi</h1>
+        <p className="text-sm text-on-surface-variant">Peso, guida per perdere grasso e storico allenamenti</p>
       </div>
 
-      {/* Weight & Target Card */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+      {/* Peso e obiettivo */}
+      <div className="card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
               <Scale className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Peso Corporeo & Obiettivo</h3>
-              <p className="text-[11px] text-slate-400">Monitoraggio deficit e composizione</p>
-            </div>
+            <h3 className="text-base font-semibold text-on-surface">Peso e obiettivo</h3>
           </div>
-          <button
-            onClick={() => setIsEditingWeight(!isEditingWeight)}
-            className="text-xs text-emerald-400 font-bold px-3 py-1 bg-emerald-500/10 rounded-xl hover:bg-emerald-500/20 transition"
-          >
-            {isEditingWeight ? 'Annulla' : 'Modifica'}
-          </button>
+          {!isEditingWeight && (
+            <button onClick={() => setIsEditingWeight(true)} className="icon-btn" aria-label="Modifica peso">
+              <Pencil className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {isEditingWeight ? (
-          <div className="space-y-3 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                  Peso Attuale (kg)
-                </label>
+              <label className="block">
+                <span className="text-xs font-medium text-on-surface-variant block mb-1">Peso attuale (kg)</span>
                 <input
                   type="number"
                   step="0.1"
                   value={currWeight}
                   onChange={(e) => setCurrWeight(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm font-bold text-white text-center"
+                  className="text-field text-center"
                 />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                  Peso Obiettivo (kg)
-                </label>
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-on-surface-variant block mb-1">Obiettivo (kg)</span>
                 <input
                   type="number"
                   step="0.1"
                   value={targetWeight}
                   onChange={(e) => setTargetWeight(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm font-bold text-white text-center"
+                  className="text-field text-center"
                 />
-              </div>
+              </label>
             </div>
-            <button
-              onClick={handleSaveWeight}
-              className="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-98 transition"
-            >
-              Salva Pesi
-            </button>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setIsEditingWeight(false)} className="btn-text">
+                Annulla
+              </button>
+              <button onClick={handleSaveWeight} className="btn-filled">
+                Salva
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2 text-center bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Attuale</span>
-              <span className="text-lg font-black text-white">{stats.currentWeightKg} kg</span>
-            </div>
-            <div className="border-x border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Obiettivo</span>
-              <span className="text-lg font-black text-emerald-400">{stats.targetWeightKg} kg</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Da Perdere</span>
-              <span className="text-lg font-black text-cyan-400">-{kgToLose.toFixed(1)} kg</span>
-            </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: 'Attuale', value: `${stats.currentWeightKg} kg`, color: 'text-on-surface' },
+              { label: 'Obiettivo', value: `${stats.targetWeightKg} kg`, color: 'text-primary' },
+              { label: 'Da perdere', value: `${kgToLose.toFixed(1)} kg`, color: 'text-secondary' }
+            ].map((cell) => (
+              <div key={cell.label} className="bg-surface-container-high rounded-xl py-3">
+                <span className={`block text-lg font-semibold tabular-nums ${cell.color}`}>{cell.value}</span>
+                <span className="text-xs text-on-surface-variant">{cell.label}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Guide to Belly Fat Loss & Nutrition (Expandable Pillars) */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <BookOpen className="w-4 h-4 text-emerald-400" />
-          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-300">
-            Guida Scientifica: Perdere Grasso & Addominali
-          </h2>
-        </div>
-
-        <div className="space-y-2.5">
+      {/* Guida: pannelli espandibili */}
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-on-surface">Guida per perdere grasso</h2>
+        <div className="card overflow-hidden divide-y divide-outline-variant/60">
           {FAT_LOSS_PILLARS.map((pillar, idx) => {
             const isSelected = selectedPillarIndex === idx;
             return (
-              <div
-                key={idx}
-                className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden transition"
-              >
+              <div key={idx}>
                 <button
                   onClick={() => setSelectedPillarIndex(isSelected ? null : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between hover:bg-slate-800/40 transition"
+                  className="w-full px-4 py-3 text-left flex items-center justify-between gap-3 hover:bg-on-surface/5 transition-colors"
+                  aria-expanded={isSelected}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800/50">
-                      {pillar.badge}
-                    </span>
-                    <h4 className="text-xs font-bold text-white">{pillar.title}</h4>
+                  <div className="min-w-0">
+                    <span className="text-xs font-medium text-primary">{pillar.badge}</span>
+                    <h4 className="text-sm font-medium text-on-surface">{pillar.title}</h4>
                   </div>
-                  <ChevronRight
-                    className={`w-4 h-4 text-slate-400 transition-transform ${
-                      isSelected ? 'rotate-90 text-emerald-400' : ''
-                    }`}
+                  <ChevronDown
+                    className={`w-5 h-5 flex-shrink-0 text-on-surface-variant transition-transform ${isSelected ? 'rotate-180' : ''}`}
                   />
                 </button>
 
                 {isSelected && (
-                  <div className="p-4 pt-0 space-y-3 border-t border-slate-800/60 bg-slate-950/40 animate-in fade-in">
-                    <p className="text-xs text-slate-300 leading-relaxed font-medium mt-3">
-                      {pillar.summary}
-                    </p>
+                  <div className="px-4 pb-4 space-y-3 animate-in fade-in">
+                    <p className="text-sm text-on-surface leading-relaxed">{pillar.summary}</p>
                     <div className="space-y-2">
                       {pillar.practicalTips.map((tip, tIdx) => (
-                        <div key={tIdx} className="flex items-start text-xs text-slate-400 gap-2">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <div key={tIdx} className="flex items-start text-sm text-on-surface-variant gap-2">
+                          <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                           <span>{tip}</span>
                         </div>
                       ))}
@@ -195,82 +162,57 @@ export const ProgressGuideTab: React.FC = () => {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Workout History */}
-      <div className="space-y-3">
+      {/* Storico allenamenti */}
+      <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-cyan-400" />
-            <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-300">
-              Storico Allenamenti ({history.length})
-            </h2>
-          </div>
+          <h2 className="text-lg font-semibold text-on-surface">Storico ({history.length})</h2>
           {history.length > 0 && (
-            <button
-              onClick={() => setPendingDelete({ kind: 'all' })}
-              className="flex items-center gap-1 text-[11px] font-bold text-red-400 hover:text-red-300 px-2.5 py-1 rounded-xl bg-red-500/10 transition active:scale-95"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
+            <button onClick={() => setPendingDelete({ kind: 'all' })} className="btn-text text-error hover:bg-error/10">
+              <Trash2 className="w-4 h-4" />
               Cancella tutto
             </button>
           )}
         </div>
 
-
         {history.length === 0 ? (
-          <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-3xl p-8 text-center">
-            <Trophy className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-xs font-bold text-slate-300">Nessun allenamento ancora registrato</p>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Completa una scheda per vedere qui la durata, le calorie bruciate e i carichi sollevati.
+          <div className="card p-8 text-center">
+            <Trophy className="w-10 h-10 text-on-surface-variant mx-auto mb-2" />
+            <p className="text-sm font-semibold text-on-surface">Nessun allenamento registrato</p>
+            <p className="text-sm text-on-surface-variant mt-1">
+              Completa una scheda per vedere qui durata, calorie e carichi sollevati.
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="card overflow-hidden divide-y divide-outline-variant/60">
             {history.map((item) => {
               const dateStr = formatWorkoutDate(item);
               const mins = Math.round(item.durationSeconds / 60);
 
               return (
-                <div
-                  key={item.id}
-                  className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-3.5 flex items-center justify-between"
-                >
+                <div key={item.id} className="pl-4 pr-1 py-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                      {dateStr}
-                    </span>
-                    <h4 className="text-xs font-bold text-white line-clamp-1">
-                      {item.routineTitle}
-                    </h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {item.exercisesCompletedCount} esercizi • {item.totalVolumeKg} kg volume
+                    <span className="text-xs text-on-surface-variant">{dateStr}</span>
+                    <h4 className="text-sm font-medium text-on-surface line-clamp-1">{item.routineTitle}</h4>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      {mins} min · ~{item.estimatedCalories} kcal · {item.exercisesCompletedCount} esercizi · {item.totalVolumeKg} kg
                     </p>
                   </div>
-
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="text-right">
-                      <span className="text-xs font-black text-orange-400 block">
-                        ~{item.estimatedCalories} kcal
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">{mins} min</span>
-                    </div>
-                    <button
-                      onClick={() => setPendingDelete({ kind: 'one', item })}
-                      className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition active:scale-95"
-                      title="Elimina allenamento"
-                      aria-label={`Elimina allenamento ${item.routineTitle} del ${dateStr}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setPendingDelete({ kind: 'one', item })}
+                    className="icon-btn hover:text-error"
+                    title="Elimina allenamento"
+                    aria-label={`Elimina allenamento ${item.routineTitle} del ${dateStr}`}
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {pendingDelete && (
         <ConfirmModal

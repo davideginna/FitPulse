@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Check, Minus, Plus } from 'lucide-react';
 import {
   FreeTimerControls,
   getRestRemainingMs,
@@ -51,212 +51,141 @@ export const FreeTimerTab: React.FC<Props> = ({ timer }) => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  /** Riga "etichetta, valore, - e +" per i parametri del circuito HIIT. */
+  const stepper = (label: string, value: string, onMinus: () => void, onPlus: () => void) => (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-on-surface">{label}</span>
+      <div className="flex items-center gap-1">
+        <button onClick={onMinus} className="icon-btn" aria-label={`Diminuisci ${label}`}>
+          <Minus className="w-5 h-5" />
+        </button>
+        <span className="w-12 text-center text-base font-semibold tabular-nums text-on-surface">{value}</span>
+        <button onClick={onPlus} className="icon-btn" aria-label={`Aumenta ${label}`}>
+          <Plus className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const RING_RADIUS = 100;
+  const ringLength = 2 * Math.PI * RING_RADIUS;
+
   return (
     <div className="space-y-5 pb-24">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-white">Timer & Recupero</h1>
-          <p className="text-xs text-slate-400">Cronometro da palestra e intervalli brucia-grassi</p>
+          <h1 className="text-2xl font-semibold text-on-surface">Timer</h1>
+          <p className="text-sm text-on-surface-variant">Recuperi tra le serie e intervalli HIIT</p>
         </div>
         <button
           onClick={timer.toggleSound}
-          className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-300 hover:text-white"
+          className="icon-btn"
+          aria-label={soundEnabled ? 'Disattiva suono' : 'Attiva suono'}
+          title={soundEnabled ? 'Suono attivo' : 'Suono disattivato'}
         >
-          {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-slate-500" />}
+          {soundEnabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mode Switcher */}
-      <div className="grid grid-cols-2 p-1 bg-slate-900 rounded-2xl border border-slate-800">
-        <button
-          onClick={() => timer.setMode('rest')}
-          className={`py-2 rounded-xl text-xs font-bold transition ${
-            mode === 'rest'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Recupero Tra Serie
+      <div className="segmented w-full">
+        <button onClick={() => timer.setMode('rest')} className={mode === 'rest' ? 'segment-selected min-h-10' : 'segment min-h-10'}>
+          {mode === 'rest' && <Check className="w-4 h-4" />}
+          Recupero
         </button>
-        <button
-          onClick={() => timer.setMode('tabata')}
-          className={`py-2 rounded-xl text-xs font-bold transition ${
-            mode === 'tabata'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          HIIT / Circuiti Brucia Grassi
+        <button onClick={() => timer.setMode('tabata')} className={mode === 'tabata' ? 'segment-selected min-h-10' : 'segment min-h-10'}>
+          {mode === 'tabata' && <Check className="w-4 h-4" />}
+          HIIT / Circuito
         </button>
       </div>
 
       {mode === 'rest' ? (
-        /* QUICK REST TIMER */
         <div className="space-y-5">
-          {/* Circular Countdown Card */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
+          <div className="card p-6 flex flex-col items-center text-center">
             <div className="relative w-60 h-60 flex items-center justify-center">
-              <svg className="w-60 h-60 -rotate-90">
-                <circle cx="120" cy="120" r="100" className="stroke-slate-800" strokeWidth="12" fill="transparent" />
+              <svg className="w-60 h-60 -rotate-90" viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r={RING_RADIUS} className="stroke-surface-container-highest" strokeWidth="10" fill="transparent" />
                 <circle
                   cx="120"
                   cy="120"
-                  r="100"
-                  
-                  strokeWidth="12"
+                  r={RING_RADIUS}
+                  strokeWidth="10"
                   fill="transparent"
-                  strokeDasharray={2 * Math.PI * 100}
-                  strokeDashoffset={(2 * Math.PI * 100) - (restProgress * (2 * Math.PI * 100))}
+                  strokeDasharray={ringLength}
+                  strokeDashoffset={ringLength - restProgress * ringLength}
                   strokeLinecap="round"
-                  className={`transition-all duration-300 ${restTimeLeft <= 5 ? 'stroke-red-500' : 'stroke-emerald-500'}`}
+                  className={`transition-all duration-300 ${restTimeLeft <= 5 ? 'stroke-error' : 'stroke-primary'}`}
                 />
               </svg>
 
               <div className="absolute flex flex-col items-center">
-                <span className="text-5xl font-black font-mono text-white tracking-tight">
-                  {formatMinSec(restTimeLeft)}
-                </span>
-                <span className="text-xs uppercase font-bold text-slate-400 mt-2">
-                  {isRestRunning ? 'Recupero attivo' : 'In attesa'}
-                </span>
+                <span className="text-6xl font-normal tabular-nums text-on-surface">{formatMinSec(restTimeLeft)}</span>
+                <span className="text-sm text-on-surface-variant mt-1">{isRestRunning ? 'Recupero in corso' : 'Pronto'}</span>
               </div>
             </div>
 
-            {/* Play / Pause / Reset Actions */}
-            <div className="flex items-center space-x-4 mt-6">
-              <button
-                onClick={timer.resetRest}
-                className="p-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition"
-                title="Reset"
-              >
-                <RotateCcw className="w-5 h-5" />
+            <div className="flex items-center gap-3 mt-6">
+              <button onClick={timer.resetRest} className="icon-btn w-14 h-14 bg-surface-container-highest" aria-label="Azzera" title="Azzera">
+                <RotateCcw className="w-6 h-6" />
               </button>
-
-              <button
-                onClick={timer.toggleRest}
-                className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2 text-base"
-              >
+              <button onClick={timer.toggleRest} className="btn-filled h-14 px-8 text-base min-w-36">
                 {isRestRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
-                <span>{isRestRunning ? 'Pausa' : 'Avvia'}</span>
+                {isRestRunning ? 'Pausa' : 'Avvia'}
               </button>
-
-              <button
-                onClick={() => timer.addRestTime(15)}
-                className="p-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition font-bold text-xs"
-              >
+              <button onClick={() => timer.addRestTime(15)} className="icon-btn w-14 h-14 bg-surface-container-highest text-sm font-semibold text-on-surface">
                 +15s
               </button>
             </div>
           </div>
 
-          {/* Quick Presets */}
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              Tempi Consigliati da Palestra:
-            </span>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="text-sm font-medium text-on-surface-variant mb-2">Durata del recupero</p>
+            <div className="flex flex-wrap gap-2">
               {[30, 45, 60, 75, 90, 120].map((secs) => (
                 <button
                   key={secs}
                   onClick={() => timer.selectRestPreset(secs)}
-                  className={`py-3 rounded-2xl text-xs font-bold transition border ${
-                    restDuration === secs
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-inner'
-                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                  }`}
+                  aria-pressed={restDuration === secs}
+                  className={restDuration === secs ? 'chip-selected' : 'chip'}
                 >
-                  {secs} secondi
+                  {restDuration === secs && <Check className="w-4 h-4" />}
+                  {secs}s
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60">
-              💡 <strong className="text-white">Consiglio Dimagrimento:</strong> Per perdere grasso addominale mantieni i recuperi tra <strong className="text-emerald-400">45 e 75 secondi</strong>. In questo modo ottimizzi il debito d'ossigeno e la secrezione dell'ormone GH.
+            <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">
+              💡 Per dimagrire tieni i recuperi tra <strong className="text-on-surface">45 e 75 secondi</strong>: il cuore resta
+              alto e consumi di più.
             </p>
           </div>
         </div>
       ) : (
-        /* TABATA & HIIT TIMER */
         <div className="space-y-5">
           <div
-            className={`border rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-2xl transition-all ${
-              tabataPhase === 'work'
-                ? 'bg-emerald-950/40 border-emerald-500/40'
-                : 'bg-cyan-950/40 border-cyan-500/40'
+            className={`rounded-3xl p-6 flex flex-col items-center text-center transition-colors ${
+              tabataPhase === 'work' ? 'bg-primary-container text-on-primary-container' : 'bg-secondary-container text-on-secondary-container'
             }`}
           >
-            <div className="flex items-center space-x-2 mb-2">
-              <span
-                className={`text-xs uppercase font-extrabold px-3 py-1 rounded-full ${
-                  tabataPhase === 'work'
-                    ? 'bg-emerald-500 text-slate-950'
-                    : 'bg-cyan-400 text-slate-950'
-                }`}
-              >
-                {tabataPhase === 'work' ? '🔥 LAVORO INTENSO' : '💧 RECUPERO'}
-              </span>
-            </div>
-
-            <p className="text-xs font-bold text-slate-400 mb-1">
+            <span className="text-sm font-semibold">{tabataPhase === 'work' ? '🔥 Lavoro' : '💧 Recupero'}</span>
+            <p className="text-sm opacity-80 mt-1">
               Round {currentRound} di {totalRounds}
             </p>
+            <span className="text-7xl font-normal tabular-nums my-5">{tabataTimeLeft}s</span>
 
-            <span className="text-7xl font-black font-mono text-white tracking-tight my-4">
-              {tabataTimeLeft}s
-            </span>
-
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={timer.resetTabata}
-                className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl active:scale-95 transition"
-              >
-                <RotateCcw className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <button onClick={timer.resetTabata} className="icon-btn w-14 h-14 bg-surface/40 text-current" aria-label="Azzera">
+                <RotateCcw className="w-6 h-6" />
               </button>
-
-              <button
-                onClick={timer.toggleTabata}
-                className="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2"
-              >
+              <button onClick={timer.toggleTabata} className="btn-filled h-14 px-8 text-base min-w-36">
                 {isTabataRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
-                <span>{isTabataRunning ? 'Pausa' : 'Avvia HIIT'}</span>
+                {isTabataRunning ? 'Pausa' : 'Avvia'}
               </button>
             </div>
           </div>
 
-          {/* Configuration controls */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Parametri Circuito
-            </h4>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 block mb-1">Lavoro</span>
-                <span className="text-base font-extrabold text-emerald-400">{workSec}s</span>
-                <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => timer.changeWorkSec(-5)} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => timer.changeWorkSec(5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
-                </div>
-              </div>
-
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 block mb-1">Riposo</span>
-                <span className="text-base font-extrabold text-cyan-400">{pauseSec}s</span>
-                <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => timer.changePauseSec(-5)} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => timer.changePauseSec(5)} className="p-1 bg-slate-800 rounded text-xs">+</button>
-                </div>
-              </div>
-
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 block mb-1">Round</span>
-                <span className="text-base font-extrabold text-white">{totalRounds}</span>
-                <div className="flex justify-center gap-1 mt-1">
-                  <button onClick={() => timer.changeTotalRounds(-1)} className="p-1 bg-slate-800 rounded text-xs">-</button>
-                  <button onClick={() => timer.changeTotalRounds(1)} className="p-1 bg-slate-800 rounded text-xs">+</button>
-                </div>
-              </div>
-            </div>
+          <div className="card px-4 py-2 divide-y divide-outline-variant/60">
+            {stepper('Lavoro', `${workSec}s`, () => timer.changeWorkSec(-5), () => timer.changeWorkSec(5))}
+            {stepper('Riposo', `${pauseSec}s`, () => timer.changePauseSec(-5), () => timer.changePauseSec(5))}
+            {stepper('Round', String(totalRounds), () => timer.changeTotalRounds(-1), () => timer.changeTotalRounds(1))}
           </div>
         </div>
       )}

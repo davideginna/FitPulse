@@ -162,193 +162,158 @@ export const ActiveWorkoutView: React.FC<Props> = ({
       ? EXERCISES.find(e => e.id === routine.exercises[currentExIndex + 1]?.exerciseId)?.name 
       : undefined;
 
+  const progressPercent = ((currentExIndex + 1) / routine.exercises.length) * 100;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24">
-      {/* Top sticky bar */}
-      <div className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={onCancel}
-          className="text-slate-400 hover:text-white p-1.5 rounded-lg active:scale-95 text-xs font-semibold flex items-center gap-1"
-        >
-          <X className="w-4 h-4" /> Annulla
+    <div className="min-h-screen bg-surface text-on-surface flex flex-col pb-28">
+      {/* Top app bar: annulla, tempo trascorso, termina */}
+      <div className="sticky top-0 z-30 bg-surface px-2 h-16 flex items-center justify-between gap-2">
+        <button onClick={onCancel} className="icon-btn" aria-label="Annulla allenamento" title="Annulla">
+          <X className="w-6 h-6" />
         </button>
 
-        {/* Live workout timer */}
-        <div className="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800">
-          <Clock className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="font-mono text-sm font-bold text-white tracking-wider">
-            {formatElapsed(elapsedSeconds)}
-          </span>
+        <div className="flex items-center gap-2 text-on-surface">
+          <Clock className="w-4 h-4 text-primary" />
+          <span className="text-lg font-medium tabular-nums">{formatElapsed(elapsedSeconds)}</span>
         </div>
 
-        <button
-          onClick={handleCompleteWorkout}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition"
-        >
+        <button onClick={handleCompleteWorkout} className="btn-text">
           Termina
         </button>
       </div>
 
-      {/* Routine title & exercise stepper */}
-      <div className="px-4 pt-3 pb-2">
-        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-          <span className="truncate font-medium">{routine.title}</span>
-          <span className="font-bold text-cyan-400">
-            Esercizio {currentExIndex + 1} di {routine.exercises.length}
-          </span>
-        </div>
-
-        {/* Progress bar across routine */}
-        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all duration-300"
-            style={{ width: `${((currentExIndex + 1) / routine.exercises.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Exercise Presentation Card */}
-      <div className="px-4 mt-2">
-        <div className="bg-slate-900 border border-slate-800/80 rounded-3xl p-4 shadow-xl">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
-                {currentExerciseData.category} • {currentExerciseData.equipment}
-              </span>
-              <h2 className="text-lg font-extrabold text-white leading-tight">
-                {currentExerciseData.name}
-              </h2>
-            </div>
-            <button
-              onClick={() => setShowDetailModal(true)}
-              className="p-2 bg-slate-800 text-slate-300 hover:text-white rounded-xl active:scale-95 transition flex items-center gap-1 text-xs font-semibold"
-            >
-              <Info className="w-4 h-4 text-cyan-400" />
-              <span>Guida</span>
-            </button>
+      <div className="max-w-md mx-auto w-full">
+        {/* Titolo scheda e avanzamento */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-between text-sm text-on-surface-variant mb-2 gap-2">
+            <span className="truncate">{routine.title}</span>
+            <span className="flex-shrink-0 font-medium text-on-surface">
+              {currentExIndex + 1} / {routine.exercises.length}
+            </span>
           </div>
-
-          {/* Visual SVG Animation */}
-          <ExerciseIllustration exercise={currentExerciseData} className="w-full h-44 mb-3" />
-
-          {/* Target Reps and Suggested Rest Badges */}
-          <div className="flex items-center justify-between bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/60 text-xs">
-            <div className="flex items-center space-x-1.5 text-slate-300">
-              <span className="text-slate-400">Obiettivo:</span>
-              <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded-md">
-                {currentRoutineEx.reps} rip
-              </span>
-            </div>
-            <div className="flex items-center space-x-1.5 text-slate-300">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-slate-400">Recupero:</span>
-              <span className="font-bold text-emerald-400">
-                {currentRoutineEx.restSeconds}s
-              </span>
-            </div>
+          {/* Indicatore di avanzamento lineare M3 */}
+          <div className="w-full bg-secondary-container h-1 rounded-full overflow-hidden">
+            <div className="bg-primary h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
           </div>
-
-          {currentRoutineEx.notes && (
-            <p className="text-[11px] text-emerald-300/90 bg-emerald-950/30 border border-emerald-900/40 rounded-lg p-2 mt-2">
-              💡 {currentRoutineEx.notes}
-            </p>
-          )}
         </div>
-      </div>
 
-      {/* Sets Logger Table */}
-      <div className="px-4 mt-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-          <Dumbbell className="w-3.5 h-3.5 text-emerald-400" /> Serie e Ripetizioni
-        </h3>
-
-        <div className="space-y-2">
-          {currentExLog?.sets.map((set, sIdx) => (
-            <div
-              key={sIdx}
-              className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                set.completed
-                  ? 'bg-emerald-950/20 border-emerald-500/40'
-                  : 'bg-slate-900/90 border-slate-800'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
-                  {set.setNumber}
-                </span>
-                <span className="text-xs text-slate-400">Serie</span>
+        {/* Esercizio corrente */}
+        <div className="px-4">
+          <div className="card p-4">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="min-w-0">
+                <p className="text-xs text-on-surface-variant">
+                  {currentExerciseData.category} · {currentExerciseData.equipment}
+                </p>
+                <h2 className="text-xl font-semibold text-on-surface leading-snug">{currentExerciseData.name}</h2>
               </div>
-
-              {/* Weight Input (Kg) */}
-              <div className="flex items-center space-x-1">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={set.weightKg || ''}
-                  onChange={(e) => handleWeightChange(sIdx, parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  className="w-14 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-center font-bold text-sm text-white focus:outline-none focus:border-cyan-400"
-                />
-                <span className="text-[11px] text-slate-400">kg</span>
-              </div>
-
-              {/* Reps Input */}
-              <div className="flex items-center space-x-1">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={set.completedReps || ''}
-                  onChange={(e) => handleRepsChange(sIdx, parseInt(e.target.value) || 0)}
-                  placeholder="12"
-                  className="w-14 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-center font-bold text-sm text-white focus:outline-none focus:border-cyan-400"
-                />
-                <span className="text-[11px] text-slate-400">rip</span>
-              </div>
-
-              {/* Checkmark Complete Button */}
-              <button
-                onClick={() => handleSetToggle(sIdx)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 ${
-                  set.completed
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-                    : 'bg-slate-800 text-slate-500 hover:text-slate-300 border border-slate-700'
-                }`}
-              >
-                <Check className="w-5 h-5 stroke-[3]" />
+              <button onClick={() => setShowDetailModal(true)} className="btn-tonal min-h-9 px-3 text-xs flex-shrink-0">
+                <Info className="w-4 h-4" />
+                Guida
               </button>
             </div>
-          ))}
+
+            <ExerciseIllustration exercise={currentExerciseData} figureHeightClass="h-44" className="w-full mb-3" />
+
+            <div className="flex items-center justify-between text-sm text-on-surface-variant">
+              <span>
+                Obiettivo <strong className="text-on-surface font-semibold">{currentRoutineEx.reps} rip</strong>
+              </span>
+              <span>
+                Recupero <strong className="text-on-surface font-semibold">{currentRoutineEx.restSeconds}s</strong>
+              </span>
+            </div>
+
+            {currentRoutineEx.notes && (
+              <p className="text-sm bg-primary-container text-on-primary-container rounded-xl p-3 mt-3">💡 {currentRoutineEx.notes}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Registro serie */}
+        <div className="px-4 mt-5">
+          <h3 className="text-base font-semibold text-on-surface mb-2 flex items-center gap-2">
+            <Dumbbell className="w-5 h-5 text-primary" /> Serie
+          </h3>
+
+          <div className="space-y-2">
+            {currentExLog?.sets.map((set, sIdx) => (
+              <div
+                key={sIdx}
+                className={`flex items-center justify-between gap-2 p-2 pl-3 rounded-2xl transition-colors ${
+                  set.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container'
+                }`}
+              >
+                <span className="w-8 h-8 flex-shrink-0 rounded-full bg-surface/40 flex items-center justify-center text-sm font-semibold">
+                  {set.setNumber}
+                </span>
+
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={set.weightKg || ''}
+                    onChange={(e) => handleWeightChange(sIdx, parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                    className="text-field w-16 h-10 px-1 text-center font-semibold"
+                    aria-label={`Peso serie ${set.setNumber}`}
+                  />
+                  <span className="text-xs opacity-80">kg</span>
+                </label>
+
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={set.completedReps || ''}
+                    onChange={(e) => handleRepsChange(sIdx, parseInt(e.target.value) || 0)}
+                    placeholder="12"
+                    className="text-field w-16 h-10 px-1 text-center font-semibold"
+                    aria-label={`Ripetizioni serie ${set.setNumber}`}
+                  />
+                  <span className="text-xs opacity-80">rip</span>
+                </label>
+
+                <button
+                  onClick={() => handleSetToggle(sIdx)}
+                  className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition active:scale-90 ${
+                    set.completed ? 'bg-primary text-on-primary' : 'border border-outline text-on-surface-variant hover:bg-on-surface/8'
+                  }`}
+                  aria-pressed={set.completed}
+                  aria-label={`Serie ${set.setNumber} completata`}
+                >
+                  <Check className="w-6 h-6 stroke-[2.5]" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Navigation Footer for Exercises */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setCurrentExIndex((prev) => Math.max(0, prev - 1))}
-          disabled={currentExIndex === 0}
-          className="flex items-center space-x-1 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Precedente</span>
-        </button>
+      {/* Barra inferiore: esercizio precedente / successivo */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface-container pb-safe">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <button
+            onClick={() => setCurrentExIndex((prev) => Math.max(0, prev - 1))}
+            disabled={currentExIndex === 0}
+            className="btn-outlined h-12"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Indietro
+          </button>
 
-        {currentExIndex < routine.exercises.length - 1 ? (
-          <button
-            onClick={() => setCurrentExIndex((prev) => prev + 1)}
-            className="flex items-center space-x-1 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-md shadow-cyan-500/20 active:scale-95 transition"
-          >
-            <span>Successivo</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            onClick={handleCompleteWorkout}
-            className="flex items-center space-x-1 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-md shadow-emerald-500/30 active:scale-95 transition"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Completa Scheda</span>
-          </button>
-        )}
+          {currentExIndex < routine.exercises.length - 1 ? (
+            <button onClick={() => setCurrentExIndex((prev) => prev + 1)} className="btn-filled h-12 flex-1">
+              Successivo
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          ) : (
+            <button onClick={handleCompleteWorkout} className="btn-filled h-12 flex-1">
+              <CheckCircle2 className="w-5 h-5" />
+              Completa scheda
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Rest Timer Modal when triggered */}
@@ -372,47 +337,29 @@ export const ActiveWorkoutView: React.FC<Props> = ({
         />
       )}
 
-      {/* Finish Workout Summary Modal */}
+      {/* Riepilogo finale (dialog) */}
       {showFinishModal && completedWorkoutItem && (
-        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 text-center shadow-2xl">
-            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40">
+        <div className="scrim flex items-center justify-center p-6">
+          <div className="dialog w-full max-w-sm text-center">
+            <div className="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-8 h-8" />
             </div>
 
-            <h2 className="text-xl font-black text-white mb-1">Grande Lavoro! 🔥</h2>
-            <p className="text-xs text-slate-400 mb-6">
-              Hai completato l'allenamento. Il tuo metabolismo è al massimo!
-            </p>
+            <h2 className="text-2xl font-normal text-on-surface mb-1">Grande lavoro! 🔥</h2>
+            <p className="text-sm text-on-surface-variant mb-6">Allenamento completato e salvato.</p>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Durata</span>
-                <p className="text-lg font-black text-white">
-                  {Math.round(completedWorkoutItem.durationSeconds / 60)} min
-                </p>
-              </div>
-
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Calorie Stimate</span>
-                <p className="text-lg font-black text-orange-400">
-                  ~{completedWorkoutItem.estimatedCalories} kcal
-                </p>
-              </div>
-
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Volume Totale</span>
-                <p className="text-lg font-black text-cyan-400">
-                  {completedWorkoutItem.totalVolumeKg} kg
-                </p>
-              </div>
-
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-3">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Esercizi</span>
-                <p className="text-lg font-black text-emerald-400">
-                  {completedWorkoutItem.exercisesCompletedCount}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {[
+                { label: 'Durata', value: `${Math.round(completedWorkoutItem.durationSeconds / 60)} min` },
+                { label: 'Calorie stimate', value: `~${completedWorkoutItem.estimatedCalories}` },
+                { label: 'Volume', value: `${completedWorkoutItem.totalVolumeKg} kg` },
+                { label: 'Esercizi', value: String(completedWorkoutItem.exercisesCompletedCount) }
+              ].map((cell) => (
+                <div key={cell.label} className="bg-surface-container-highest rounded-xl p-3">
+                  <p className="text-lg font-semibold text-on-surface tabular-nums">{cell.value}</p>
+                  <span className="text-xs text-on-surface-variant">{cell.label}</span>
+                </div>
+              ))}
             </div>
 
             <button
@@ -420,9 +367,9 @@ export const ActiveWorkoutView: React.FC<Props> = ({
                 setShowFinishModal(false);
                 onFinish();
               }}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-98 transition text-sm"
+              className="btn-filled w-full h-12"
             >
-              Salva e Torna alla Home
+              Vai ai progressi
             </button>
           </div>
         </div>

@@ -20,6 +20,42 @@
 }
 
 /*
+ * RUOLI COLORE MATERIAL 3
+ * L'interfaccia segue Material Design 3 (m3.material.io). I "ruoli" M3 (surface,
+ * primary, ...) sono definiti qui come colori Tailwind, quindi si usano come
+ * classi normali: bg-surface-container, text-on-surface-variant, border-outline-variant...
+ * Puntano alle scale slate / emerald / cyan: ogni tema qui sotto le ridefinisce,
+ * quindi i ruoli cambiano da soli. Non usare valori letterali qui, tranne nel tema chiaro.
+ *  - surface*            sfondi, dal più basso (pagina) al più alto (dialog, menu)
+ *  - on-surface(-variant) testo principale / secondario
+ *  - outline(-variant)    bordi evidenti / divisori discreti
+ *  - primary, on-primary  azione principale (pulsante pieno, indicatore di navigazione)
+ *  - *-container          sfondi tinti per elementi selezionati o in evidenza
+ */
+@theme {
+  --color-surface: var(--color-slate-950);
+  --color-surface-container-low: color-mix(in oklab, var(--color-slate-900) 55%, var(--color-slate-950));
+  --color-surface-container: var(--color-slate-900);
+  --color-surface-container-high: color-mix(in oklab, var(--color-slate-900) 55%, var(--color-slate-800));
+  --color-surface-container-highest: var(--color-slate-800);
+  --color-on-surface: var(--color-slate-100);
+  --color-on-surface-variant: var(--color-slate-400);
+  --color-outline: var(--color-slate-600);
+  --color-outline-variant: var(--color-slate-700);
+  --color-primary: var(--color-emerald-400);
+  --color-on-primary: var(--color-slate-950);
+  --color-primary-container: var(--color-emerald-900);
+  --color-on-primary-container: var(--color-emerald-100);
+  --color-secondary: var(--color-cyan-400);
+  --color-secondary-container: var(--color-cyan-900);
+  --color-on-secondary-container: var(--color-cyan-100);
+  --color-error: var(--color-red-400);
+  --color-error-container: var(--color-red-950);
+  --color-on-error-container: var(--color-red-200);
+  --font-sans: 'Roboto Flex', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/*
  * TEMI
  * Le componenti usano classi Tailwind (bg-slate-950, text-emerald-400, ...) che in
  * Tailwind v4 leggono variabili CSS (--color-slate-950, ...). Ogni tema ridefinisce
@@ -175,16 +211,239 @@
   /* Attrezzi e pavimento delle figure: con la scala invertita sarebbero quasi bianchi su bianco. */
   --fig-equipment-dark: var(--color-slate-600);
   --fig-floor: var(--color-slate-600);
+  /* Ruoli M3: le tinte "on-*" derivate dalla scala invertita sarebbero chiare su chiaro. */
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #064e3b;
+  --color-secondary-container: #cffafe;
+  --color-on-secondary-container: #164e63;
+  --color-error: #dc2626;
+  --color-error-container: #fee2e2;
+  --color-on-error-container: #7f1d1d;
   color-scheme: light;
 }
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
     user-select: none;
-    background-color: var(--color-slate-950);
-    color: var(--color-slate-50);
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+  }
+}
+
+/*
+ * COMPONENTI MATERIAL 3
+ * Solo i pattern ripetuti in più file. Le varianti di un singolo componente si
+ * scrivono con normali classi Tailwind, che hanno la precedenza su queste
+ * (layer "utilities" > "components"), es. <button class="btn-filled w-full">.
+ * Forme M3: chip e campi 8px, card 16px, dialog e bottom sheet 28px, pulsanti a pillola.
+ * Gli stati hover/pressione sono un velo del colore del testo (state layer M3).
+ */
+@layer components {
+  /* Card "filled": contenitore di contenuti correlati. */
+  .card {
+    background-color: var(--color-surface-container);
+    border-radius: 16px;
+  }
+
+  /* Pulsanti. Altezza minima 40px; per l'azione principale di una schermata aggiungere h-12/h-14. */
+  .btn-filled,
+  .btn-tonal,
+  .btn-outlined,
+  .btn-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 20px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: background-color 150ms, transform 150ms;
+  }
+  .btn-filled:active,
+  .btn-tonal:active,
+  .btn-outlined:active,
+  .btn-text:active {
+    transform: scale(0.97);
+  }
+  .btn-filled:disabled,
+  .btn-tonal:disabled,
+  .btn-outlined:disabled,
+  .btn-text:disabled {
+    opacity: 0.38;
+    pointer-events: none;
+  }
+  /* Azione principale. */
+  .btn-filled {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .btn-filled:hover {
+    background-color: color-mix(in oklab, var(--color-primary), var(--color-on-primary) 8%);
+  }
+  /* Azione importante ma non principale. */
+  .btn-tonal {
+    background-color: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+  .btn-tonal:hover {
+    background-color: color-mix(in oklab, var(--color-secondary-container), var(--color-on-secondary-container) 8%);
+  }
+  /* Azione secondaria. */
+  .btn-outlined {
+    border: 1px solid var(--color-outline);
+    color: var(--color-primary);
+  }
+  .btn-outlined:hover,
+  .btn-text:hover {
+    background-color: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  }
+  /* Azione minore (es. "Annulla"). */
+  .btn-text {
+    padding: 0 12px;
+    color: var(--color-primary);
+  }
+
+  /* Pulsante con sola icona, 40x40. */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    color: var(--color-on-surface-variant);
+    transition: background-color 150ms;
+  }
+  .icon-btn:hover {
+    background-color: color-mix(in oklab, var(--color-on-surface) 8%, transparent);
+  }
+
+  /* Chip di filtro: .chip normale, .chip-selected quando attivo (stessa forma). */
+  .chip,
+  .chip-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 150ms;
+  }
+  .chip {
+    border: 1px solid var(--color-outline-variant);
+    color: var(--color-on-surface-variant);
+  }
+  .chip:hover {
+    background-color: color-mix(in oklab, var(--color-on-surface) 8%, transparent);
+  }
+  .chip-selected {
+    border: 1px solid transparent;
+    background-color: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+
+  /* Pulsante segmentato: contenitore .segmented, voci .segment / .segment-selected. */
+  .segmented {
+    display: inline-flex;
+    border: 1px solid var(--color-outline);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+  .segment,
+  .segment-selected {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 150ms;
+  }
+  .segment + .segment,
+  .segment + .segment-selected,
+  .segment-selected + .segment {
+    border-left: 1px solid var(--color-outline);
+  }
+  .segment {
+    color: var(--color-on-surface);
+  }
+  .segment:hover {
+    background-color: color-mix(in oklab, var(--color-on-surface) 8%, transparent);
+  }
+  .segment-selected {
+    background-color: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+
+  /* Velo scuro dietro a dialog e bottom sheet. */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgb(0 0 0 / 0.5);
+  }
+
+  /* Dialog centrato. */
+  .dialog {
+    background-color: var(--color-surface-container-high);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
+  }
+
+  /* Bottom sheet: pannello che sale dal basso (su schermi larghi diventa un dialog). */
+  .sheet {
+    background-color: var(--color-surface-container-low);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -4px 24px rgb(0 0 0 / 0.3);
+  }
+  @media (min-width: 640px) {
+    .sheet {
+      border-radius: 28px;
+    }
+  }
+  /* Maniglia in cima al bottom sheet. */
+  .sheet-handle {
+    width: 32px;
+    height: 4px;
+    margin: 12px auto 0;
+    border-radius: 9999px;
+    background-color: var(--color-outline);
+    opacity: 0.6;
+  }
+
+  /* Campo di testo "outlined". */
+  .text-field {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid var(--color-outline);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--color-on-surface);
+    font-size: 15px;
+  }
+  .text-field::placeholder {
+    color: var(--color-on-surface-variant);
+  }
+  .text-field:focus {
+    outline: none;
+    border: 2px solid var(--color-primary);
+    padding: 0 15px;
   }
 }
 
@@ -253,41 +512,11 @@
   animation-name: slide-in-up;
 }
 
+/*
+ * Riempimento "backwards", non "both": a fine animazione il transform deve sparire.
+ * Un transform rimasto attivo farebbe da riferimento ai figli position: fixed, e i
+ * bottom sheet aperti dentro una tab finirebbero sotto le barre invece che sopra a tutto.
+ */
 .tab-transition {
-  animation: tab-fade-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* ==========================================================================
-   BIOMECHANICAL GLOW & ENERGY EFFECTS
-   ========================================================================== */
-
-@keyframes muscle-energy-pulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
-    opacity: 0.9;
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 1)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.6));
-    opacity: 1;
-  }
-}
-
-.anim-muscle-glow {
-  animation: muscle-energy-pulse 2.8s ease-in-out infinite;
-}
-
-/* Breathing rhythm guide visualizer */
-@keyframes breath-glow-pulse {
-  0%, 100% {
-    transform: scale(0.96);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.04);
-    opacity: 1;
-  }
-}
-
-.anim-breath {
-  animation: breath-glow-pulse 3.2s ease-in-out infinite;
+  animation: tab-fade-in 220ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }

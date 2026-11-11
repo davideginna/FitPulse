@@ -29,33 +29,33 @@ export const ThemePicker: React.FC = () => {
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white active:scale-95 transition"
+        className="icon-btn"
         title="Cambia tema"
         aria-label="Cambia tema"
         aria-expanded={isOpen}
       >
-        <Palette className="w-4 h-4" />
+        <Palette className="w-5 h-5" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-1.5 z-50">
-          <div className="px-2.5 pt-1 pb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">Tema</div>
+        <div className="absolute right-0 mt-1 w-56 bg-surface-container-high rounded-xl shadow-xl py-2 z-50">
+          <div className="px-4 pt-1 pb-2 text-xs font-medium text-on-surface-variant">Tema</div>
           {THEMES.map((theme) => (
             <button
               key={theme.id}
               onClick={() => choose(theme.id)}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm text-left transition ${
-                current === theme.id ? 'bg-slate-800 text-white font-bold' : 'text-slate-300 hover:bg-slate-800/60'
+              className={`w-full flex items-center gap-3 px-4 h-12 text-sm text-left transition ${
+                current === theme.id ? 'bg-on-surface/10 text-on-surface font-semibold' : 'text-on-surface hover:bg-on-surface/8'
               }`}
             >
               {/* Anteprima con colori fissi: deve mostrare il tema anche quando non è attivo. */}
               <span className="flex -space-x-1.5">
                 {theme.swatch.map((color, i) => (
-                  <span key={i} className="w-4 h-4 rounded-full border border-slate-600" style={{ backgroundColor: color }} />
+                  <span key={i} className="w-4 h-4 rounded-full border border-outline-variant" style={{ backgroundColor: color }} />
                 ))}
               </span>
               <span className="flex-1">{theme.label}</span>
-              {current === theme.id && <Check className="w-4 h-4 text-emerald-400" />}
+              {current === theme.id && <Check className="w-4 h-4 text-primary" />}
             </button>
           ))}
         </div>

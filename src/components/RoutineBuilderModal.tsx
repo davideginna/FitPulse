@@ -67,35 +67,33 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="scrim flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in">
+      <div className="sheet relative w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden">
+        <div className="sheet-handle sm:hidden" />
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-5 py-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-white">
-            {isPickingExercise ? 'Scegli un Esercizio' : 'Crea Nuova Scheda'}
+        <div className="px-6 pt-3 pb-2 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-on-surface">
+            {isPickingExercise ? 'Scegli un esercizio' : 'Nuova scheda'}
           </h2>
           <button
             onClick={() => (isPickingExercise ? setIsPickingExercise(false) : onClose())}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800/80 rounded-full transition"
+            className="icon-btn -mr-2"
+            aria-label={isPickingExercise ? 'Torna alla scheda' : 'Chiudi'}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-5 space-y-4">
+        <div className="overflow-y-auto px-6 pb-6 pt-2 space-y-5">
           {isPickingExercise ? (
             /* Exercise picker */
             <div className="space-y-3">
               {/* Filter pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-6 px-6">
                 <button
                   onClick={() => setSelectedCategory('Tutti')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-                    selectedCategory === 'Tutti'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={selectedCategory === 'Tutti' ? 'chip-selected' : 'chip'}
                 >
                   Tutti
                 </button>
@@ -103,11 +101,7 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-                      selectedCategory === cat
-                        ? 'bg-emerald-500 text-slate-950'
-                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
+                    className={selectedCategory === cat ? 'chip-selected' : 'chip'}
                   >
                     {cat}
                   </button>
@@ -115,23 +109,20 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
               </div>
 
               {/* List */}
-              <div className="space-y-2">
+              <div className="card overflow-hidden divide-y divide-outline-variant/60">
                 {filteredExercises.map((ex) => (
                   <button
                     key={ex.id}
                     onClick={() => addExercise(ex)}
-                    className="w-full text-left p-3.5 bg-slate-950/70 hover:bg-slate-800 border border-slate-800/80 rounded-2xl flex items-center justify-between active:scale-98 transition"
+                    className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-on-surface/5 transition-colors"
                   >
                     <div>
-                      <span className="text-[10px] font-bold text-emerald-400 uppercase">
-                        {ex.category} • {ex.equipment}
-                      </span>
-                      <p className="text-sm font-bold text-white">{ex.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Consigliato: {ex.defaultSets} serie x {ex.recommendedReps} | Riposo {ex.recommendedRestSeconds}s
+                      <p className="text-sm font-medium text-on-surface">{ex.name}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {ex.category} · {ex.defaultSets}x{ex.recommendedReps} · recupero {ex.recommendedRestSeconds}s
                       </p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 flex-shrink-0 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
                       <Plus className="w-4 h-4" />
                     </div>
                   </button>
@@ -142,26 +133,26 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
             /* Main Form */
             <>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Nome Scheda
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">
+                  Nome scheda
                 </label>
                 <input
                   type="text"
                   placeholder="Es. Circuito Brucia Grassi Lunedì"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="text-field"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-on-surface-variant mb-1">
                   Obiettivo
                 </label>
                 <select
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="text-field bg-surface-container-low"
                 >
                   <option value="Dimagrimento e Pancia Piatta">Dimagrimento e Pancia Piatta</option>
                   <option value="Definizione e Tonificazione">Definizione e Tonificazione</option>
@@ -172,24 +163,24 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Esercizi Selezionati ({selectedExercises.length})
-                  </label>
+                  <h3 className="text-base font-semibold text-on-surface">
+                    Esercizi ({selectedExercises.length})
+                  </h3>
                   <button
                     onClick={() => setIsPickingExercise(true)}
-                    className="text-xs text-emerald-400 font-bold flex items-center gap-1 hover:underline"
+                    className="btn-text -mr-3"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Aggiungi Esercizio
+                    <Plus className="w-4 h-4" /> Aggiungi
                   </button>
                 </div>
 
                 {selectedExercises.length === 0 ? (
-                  <div className="bg-slate-950/50 border border-dashed border-slate-800 rounded-2xl p-6 text-center">
-                    <Dumbbell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-xs text-slate-400 mb-3">Nessun esercizio ancora aggiunto</p>
+                  <div className="card p-6 text-center">
+                    <Dumbbell className="w-8 h-8 text-on-surface-variant mx-auto mb-2" />
+                    <p className="text-sm text-on-surface-variant mb-3">Nessun esercizio ancora aggiunto</p>
                     <button
                       onClick={() => setIsPickingExercise(true)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl text-xs font-bold transition"
+                      className="btn-tonal"
                     >
                       Scegli dalla libreria
                     </button>
@@ -201,18 +192,19 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
                       return (
                         <div
                           key={idx}
-                          className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 space-y-3"
+                          className="card p-4 space-y-3"
                         >
                           <div className="flex items-start justify-between">
                             <div>
-                              <span className="text-[10px] font-bold text-emerald-400 uppercase">
-                                #{idx + 1} • {exData?.category}
+                              <span className="text-xs text-on-surface-variant">
+                                {idx + 1} · {exData?.category}
                               </span>
-                              <h4 className="text-sm font-bold text-white">{exData?.name}</h4>
+                              <h4 className="text-sm font-semibold text-on-surface">{exData?.name}</h4>
                             </div>
                             <button
                               onClick={() => removeExercise(idx)}
-                              className="text-slate-500 hover:text-red-400 p-1"
+                              className="icon-btn -mr-2 -mt-2 hover:text-error"
+                              aria-label="Rimuovi esercizio"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -220,7 +212,7 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
 
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <span className="text-[10px] text-slate-400 block mb-1">Serie</span>
+                              <span className="text-xs text-on-surface-variant block mb-1">Serie</span>
                               <input
                                 type="number"
                                 min="1"
@@ -229,20 +221,20 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
                                 onChange={(e) =>
                                   updateExercise(idx, 'sets', parseInt(e.target.value) || 3)
                                 }
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-xs font-bold text-white"
+                                className="text-field h-10 px-2 text-center text-sm"
                               />
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block mb-1">Ripetizioni</span>
+                              <span className="text-xs text-on-surface-variant block mb-1">Ripetizioni</span>
                               <input
                                 type="text"
                                 value={item.reps}
                                 onChange={(e) => updateExercise(idx, 'reps', e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-xs font-bold text-white"
+                                className="text-field h-10 px-2 text-center text-sm"
                               />
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block mb-1">Riposo (sec)</span>
+                              <span className="text-xs text-on-surface-variant block mb-1">Riposo (sec)</span>
                               <input
                                 type="number"
                                 step="15"
@@ -252,7 +244,7 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
                                 onChange={(e) =>
                                   updateExercise(idx, 'restSeconds', parseInt(e.target.value) || 60)
                                 }
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-xs font-bold text-emerald-400"
+                                className="text-field h-10 px-2 text-center text-sm"
                               />
                             </div>
                           </div>
@@ -268,13 +260,13 @@ export const RoutineBuilderModal: React.FC<Props> = ({ onClose, onSaved }) => {
 
         {/* Footer */}
         {!isPickingExercise && (
-          <div className="sticky bottom-0 bg-slate-900/95 border-t border-slate-800 p-4">
+          <div className="px-6 py-4 pb-safe border-t border-outline-variant/60">
             <button
               onClick={handleSave}
               disabled={!title.trim() || selectedExercises.length === 0}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-98 transition disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 text-sm"
+              className="btn-filled w-full h-14 text-base"
             >
-              <Check className="w-4 h-4 stroke-[3]" /> Salva Scheda Personalizzata
+              <Check className="w-5 h-5" /> Salva scheda
             </button>
           </div>
         )}

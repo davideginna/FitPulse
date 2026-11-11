@@ -109,48 +109,40 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-surface text-on-surface flex flex-col antialiased">
       {/* Offline Alert Banner */}
       {isOffline && (
-        <div className="bg-amber-600 text-slate-950 font-bold text-xs py-1 px-4 text-center flex items-center justify-center gap-1.5 sticky top-0 z-50">
+        <div className="bg-amber-500 text-amber-950 font-medium text-xs py-1.5 px-4 text-center flex items-center justify-center gap-1.5 sticky top-0 z-50">
           <WifiOff className="w-3.5 h-3.5" />
-          <span>Modalità Offline attiva: l'app funziona perfettamente senza connessione</span>
+          <span>Sei offline: l'app funziona lo stesso</span>
         </div>
       )}
 
-      {/* Main Top Header */}
-      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900/80 px-4 py-3">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-slate-950 fill-current" />
+      {/* Top app bar (M3 "small") */}
+      <header className="sticky top-0 z-30 bg-surface px-4 h-16 flex items-center">
+        <div className="max-w-md mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+              <Flame className="w-5 h-5 fill-current" />
             </div>
-            <div>
-              <span className="text-base font-black tracking-tight text-white flex items-center gap-1">
-                FIT<span className="text-emerald-400">PULSE</span>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded font-semibold ml-1">PWA</span>
-              </span>
-            </div>
+            <span className="text-[22px] font-semibold tracking-tight text-on-surface">FitPulse</span>
           </div>
 
-          <div className="flex items-center gap-2">
-          {/* Install PWA Button if available */}
-          {deferredPrompt && (
-            <button
-              onClick={handleInstallClick}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Installa App</span>
-            </button>
-          )}
-          <ThemePicker />
+          <div className="flex items-center gap-1">
+            {/* Install PWA Button if available */}
+            {deferredPrompt && (
+              <button onClick={handleInstallClick} className="btn-tonal min-h-9 px-4 text-xs">
+                <Download className="w-4 h-4" />
+                <span>Installa</span>
+              </button>
+            )}
+            <ThemePicker />
           </div>
         </div>
       </header>
 
       {/* Main Tab Content */}
-      <main className="flex-1 max-w-md mx-auto w-full px-4 pt-4">
+      <main className="flex-1 max-w-md mx-auto w-full px-4 pt-2">
         <div key={activeTab} className="tab-transition">
           {activeTab === 'workout' && (
             <WorkoutTab

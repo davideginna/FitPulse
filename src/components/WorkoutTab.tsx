@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  Play, 
-  Flame, 
-  Clock, 
-  Plus, 
-  Sparkles
-} from 'lucide-react';
+import { Play, Flame, Clock, Plus, X, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
 import { GoalId, Routine } from '../types';
 import { EXERCISES } from '../data/exercises';
 import { TRAINING_GOALS, getGoal } from '../data/goals';
 import { getUserStats, getSelectedGoal, saveSelectedGoal } from '../utils/storage';
+import {
+  DEFAULT_SORT,
+  DIFFICULTY_OPTIONS,
+  DURATION_OPTIONS,
+  SORT_OPTIONS,
+  DifficultyFilter,
+  DurationFilter,
+  RoutineSort,
+  filterAndSortRoutines
+} from '../utils/routineFilters';
 
 /**
  * Nome breve per le pillole delle schede: prime due parole, senza la parte tra
@@ -55,16 +59,27 @@ export const WorkoutTab: React.FC<Props> = ({
     setShowAllRoutines(false);
   };
 
+  // Filtri e ordinamento (si azzerano cambiando tab, come la scelta "Mostra tutte").
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>('tutte');
+  const [duration, setDuration] = useState<DurationFilter>('tutte');
+  const [sort, setSort] = useState<RoutineSort>(DEFAULT_SORT);
+  const [showFilters, setShowFilters] = useState(false);
+  const activeFilterCount = (difficulty !== 'tutte' ? 1 : 0) + (duration !== 'tutte' ? 1 : 0);
+  const resetFilters = () => {
+    setDifficulty('tutte');
+    setDuration('tutte');
+  };
+
   // Schede dell'obiettivo scelto; quelle senza `goals` (create dall'utente) si vedono sempre.
   const goalRoutines = routines.filter((r) => !r.goals || r.goals.includes(selectedGoal));
-  const visibleRoutines = showAllRoutines ? routines : goalRoutines;
+  const visibleRoutines = filterAndSortRoutines(showAllRoutines ? routines : goalRoutines, difficulty, duration, sort);
   const hiddenRoutinesCount = routines.length - goalRoutines.length;
 
   return (
-    <div className="space-y-6 pb-24">
-      {/* Selettore obiettivo */}
+    <div className="space-y-5 pb-24">
+      {/* Selettore obiettivo (chip di filtro M3) */}
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Il tuo obiettivo</p>
+        <p className="text-sm font-medium text-on-surface-variant mb-2">Il tuo obiettivo</p>
         <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
           {TRAINING_GOALS.map((g) => {
             const isActive = g.id === selectedGoal;
@@ -73,11 +88,7 @@ export const WorkoutTab: React.FC<Props> = ({
                 key={g.id}
                 onClick={() => chooseGoal(g.id)}
                 aria-pressed={isActive}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition active:scale-95 ${
-                  isActive
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-md shadow-emerald-500/20'
-                    : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
-                }`}
+                className={isActive ? 'chip-selected' : 'chip'}
               >
                 <span aria-hidden="true">{g.emoji}</span>
                 {g.label}
@@ -87,207 +98,236 @@ export const WorkoutTab: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Hero Goal Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-slate-900 to-cyan-950 rounded-3xl p-5 border border-emerald-500/30 shadow-2xl">
-        <div className="absolute top-0 right-0 -mr-6 -mt-6 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex items-center space-x-2 text-emerald-400 mb-2">
-          <Sparkles className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Obiettivo Principale</span>
-        </div>
+      {/* Card obiettivo */}
+      <div className="rounded-3xl p-5 bg-primary-container text-on-primary-container">
+        <h1 className="text-2xl font-semibold leading-tight mb-1.5">{goal.title}</h1>
+        <p className="text-sm leading-relaxed opacity-90 mb-4">{goal.description}</p>
 
-        <h1 className="text-xl font-black text-white leading-tight mb-1">
-          {goal.title}
-        </h1>
-        <p className="text-xs text-slate-300 leading-relaxed mb-4 max-w-sm">
-          {goal.description}
-        </p>
-
-        {/* Quick Stats Pill */}
-        <div className="grid grid-cols-3 gap-2 bg-slate-950/70 backdrop-blur rounded-2xl p-3 border border-slate-800/80">
-          <div className="text-center">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Sessioni</span>
-            <span className="text-base font-black text-white">{userStats.workoutsCompleted}</span>
-          </div>
-          <div className="text-center border-x border-slate-800">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Minuti</span>
-            <span className="text-base font-black text-emerald-400">{userStats.totalMinutesTrained}m</span>
-          </div>
-          <div className="text-center">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Calorie</span>
-            <span className="text-base font-black text-orange-400">~{userStats.estimatedCaloriesBurned}</span>
-          </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: 'Sessioni', value: String(userStats.workoutsCompleted) },
+            { label: 'Minuti', value: String(userStats.totalMinutesTrained) },
+            { label: 'Calorie', value: `~${userStats.estimatedCaloriesBurned}` }
+          ].map((stat) => (
+            <div key={stat.label} className="bg-surface/40 rounded-2xl py-2.5 text-center">
+              <span className="block text-xl font-semibold tabular-nums">{stat.value}</span>
+              <span className="text-xs opacity-80">{stat.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Action Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-extrabold text-white">Schede Consigliate</h2>
-          <p className="text-xs text-slate-400">
-            {showAllRoutines ? 'Tutte le schede disponibili' : `${goalRoutines.length} schede per: ${goal.label}`}
+      {/* Intestazione elenco + azioni */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-on-surface">Schede</h2>
+          <p className="text-xs text-on-surface-variant">
+            {visibleRoutines.length} {showAllRoutines ? 'in totale' : `per ${goal.label}`}
           </p>
         </div>
-        <button
-          onClick={onOpenBuilder}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold active:scale-95 transition"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Crea Scheda</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`relative ${showFilters ? 'icon-btn bg-secondary-container text-on-secondary-container' : 'icon-btn'}`}
+            aria-expanded={showFilters}
+            aria-label="Filtra e ordina le schede"
+            title="Filtra e ordina"
+          >
+            <SlidersHorizontal className="w-5 h-5" />
+            {activeFilterCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-error text-[10px] font-bold text-surface flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <button onClick={onOpenBuilder} className="btn-tonal px-4">
+            <Plus className="w-4 h-4" />
+            Crea
+          </button>
+        </div>
       </div>
 
-      {/* Routine Cards List */}
-      <div className="space-y-3.5">
+      {/* Pannello filtri */}
+      {showFilters && (
+        <div className="card p-4 space-y-4">
+          <div>
+            <p className="text-xs font-medium text-on-surface-variant mb-2">Difficoltà</p>
+            <div className="flex flex-wrap gap-2">
+              {DIFFICULTY_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setDifficulty(option.id)}
+                  aria-pressed={difficulty === option.id}
+                  className={difficulty === option.id ? 'chip-selected' : 'chip'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-on-surface-variant mb-2">Durata</p>
+            <div className="flex flex-wrap gap-2">
+              {DURATION_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setDuration(option.id)}
+                  aria-pressed={duration === option.id}
+                  className={duration === option.id ? 'chip-selected' : 'chip'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="flex items-center gap-3">
+            <ArrowUpDown className="w-4 h-4 text-on-surface-variant" />
+            <span className="text-xs font-medium text-on-surface-variant">Ordina</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as RoutineSort)}
+              className="flex-1 h-10 px-3 rounded-lg border border-outline bg-surface-container text-sm text-on-surface"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {activeFilterCount > 0 && (
+            <button onClick={resetFilters} className="btn-text -ml-3">
+              <X className="w-4 h-4" />
+              Rimuovi filtri
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Elenco schede */}
+      <div className="space-y-3">
+        {visibleRoutines.length === 0 && (
+          <div className="card p-6 text-center">
+            <p className="text-sm text-on-surface-variant mb-3">Nessuna scheda con questi filtri.</p>
+            <button onClick={resetFilters} className="btn-outlined">
+              Rimuovi filtri
+            </button>
+          </div>
+        )}
         {visibleRoutines.map((routine) => {
           const isExpanded = expandedRoutineIds.includes(routine.id);
           const visibleExercises = isExpanded ? routine.exercises : routine.exercises.slice(0, PREVIEW_COUNT);
           const hiddenCount = routine.exercises.length - PREVIEW_COUNT;
           return (
-          <div
-            key={routine.id}
-            className="bg-slate-900/90 border border-slate-800/80 hover:border-emerald-500/40 rounded-3xl p-4 transition-all shadow-lg hover:shadow-emerald-500/5 group"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 pr-2">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40">
-                    {routine.level}
-                  </span>
-                  <span className="text-[10px] font-medium text-slate-400">
-                    {routine.exercises.length} esercizi
-                  </span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-emerald-300 transition">
-                  {routine.title}
-                </h3>
-                <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
-                  {routine.subtitle}
-                </p>
+            <div key={routine.id} className="card p-4">
+              <div className="flex items-center gap-2 mb-1.5 text-xs text-on-surface-variant">
+                <span className="px-2 py-0.5 rounded-md bg-surface-container-highest font-medium text-on-surface">
+                  {routine.level}
+                </span>
+                <span>{routine.exercises.length} esercizi</span>
               </div>
-            </div>
+              <h3 className="text-base font-semibold text-on-surface leading-snug">{routine.title}</h3>
+              <p className="text-sm text-on-surface-variant mt-0.5">{routine.subtitle}</p>
 
-            {/* Tags and metrics */}
-            <div className="flex items-center space-x-4 text-xs text-slate-400 my-3">
-              <div className="flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{routine.estimatedDurationMinutes} min</span>
+              <div className="flex items-center gap-4 text-sm text-on-surface-variant my-3">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" />
+                  {routine.estimatedDurationMinutes} min
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Flame className="w-4 h-4" />~{routine.estimatedCaloriesBurn} kcal
+                </span>
               </div>
-              <div className="flex items-center space-x-1">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                <span>~{routine.estimatedCaloriesBurn} kcal</span>
-              </div>
-            </div>
 
-            {/* Exercise preview pills */}
-            <div className="flex flex-wrap gap-1.5 mb-3.5">
-              {visibleExercises.map((item, idx) => {
-                const ex = EXERCISES.find((e) => e.id === item.exerciseId);
-                return (
+              {/* Anteprima esercizi */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {visibleExercises.map((item, idx) => {
+                  const ex = EXERCISES.find((e) => e.id === item.exerciseId);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => ex && onSelectExercisePreview(ex.id)}
+                      className="chip h-7 px-2.5 text-xs"
+                    >
+                      <span>{ex ? shortExerciseName(ex.name) : ''}</span>
+                      <span className="text-primary font-semibold">{item.sets}x{item.reps}</span>
+                    </button>
+                  );
+                })}
+                {hiddenCount > 0 && (
                   <button
-                    key={idx}
-                    onClick={() => ex && onSelectExercisePreview(ex.id)}
-                    className="text-[10px] bg-slate-950 border border-slate-800/80 hover:border-slate-700 text-slate-300 px-2.5 py-1 rounded-lg font-medium transition active:scale-95 flex items-center gap-1"
+                    onClick={() => toggleExpanded(routine.id)}
+                    className="btn-text min-h-7 px-2 text-xs"
+                    aria-expanded={isExpanded}
                   >
-                    <span>{ex ? shortExerciseName(ex.name) : ''}</span>
-                    <span className="text-emerald-400 font-bold">{item.sets}x{item.reps}</span>
+                    {isExpanded ? 'Mostra meno' : `+${hiddenCount} altri`}
                   </button>
-                );
-              })}
-              {hiddenCount > 0 && (
-                <button
-                  onClick={() => toggleExpanded(routine.id)}
-                  className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 py-1 px-1.5 transition active:scale-95"
-                  aria-expanded={isExpanded}
-                >
-                  {isExpanded ? 'Mostra meno' : `+${hiddenCount} altri`}
-                </button>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
-              <button
-                onClick={() => setSelectedRoutinePreview(routine)}
-                className="text-xs font-semibold text-slate-400 hover:text-slate-200 transition"
-              >
-                Vedi Dettagli
-              </button>
-              <button
-                onClick={() => onSelectRoutine(routine)}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Inizia Allenamento</span>
-              </button>
+              <div className="flex items-center justify-end gap-2">
+                <button onClick={() => setSelectedRoutinePreview(routine)} className="btn-text">
+                  Dettagli
+                </button>
+                <button onClick={() => onSelectRoutine(routine)} className="btn-filled">
+                  <Play className="w-4 h-4 fill-current" />
+                  Inizia
+                </button>
+              </div>
             </div>
-          </div>
           );
         })}
       </div>
 
       {hiddenRoutinesCount > 0 && (
-        <button
-          onClick={() => setShowAllRoutines(!showAllRoutines)}
-          className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-xs font-bold text-slate-300 hover:text-white hover:border-slate-600 transition"
-        >
+        <button onClick={() => setShowAllRoutines(!showAllRoutines)} className="btn-outlined w-full">
           {showAllRoutines ? `Mostra solo le schede per ${goal.label}` : `Mostra tutte le schede (+${hiddenRoutinesCount})`}
         </button>
       )}
 
-      {/* Routine Detail Modal */}
+      {/* Dettaglio scheda (bottom sheet) */}
       {selectedRoutinePreview && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div className="scrim flex items-end sm:items-center justify-center sm:p-4" onClick={() => setSelectedRoutinePreview(null)}>
+          <div
+            className="sheet relative w-full max-w-lg max-h-[90vh] flex flex-col animate-in slide-in-from-bottom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sheet-handle sm:hidden" />
+            <div className="px-6 pt-4 pb-2 flex items-start justify-between gap-2">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                  Dettagli Scheda
-                </span>
-                <h3 className="text-base font-bold text-white">{selectedRoutinePreview.title}</h3>
+                <p className="text-xs font-medium text-on-surface-variant">{selectedRoutinePreview.level} · {selectedRoutinePreview.estimatedDurationMinutes} min</p>
+                <h3 className="text-xl font-semibold text-on-surface">{selectedRoutinePreview.title}</h3>
               </div>
-              <button
-                onClick={() => setSelectedRoutinePreview(null)}
-                className="text-slate-400 hover:text-white p-2"
-              >
-                ✕
+              <button onClick={() => setSelectedRoutinePreview(null)} className="icon-btn -mr-2" aria-label="Chiudi">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto space-y-3">
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {selectedRoutinePreview.description}
-              </p>
+            <div className="px-6 pb-4 overflow-y-auto space-y-3">
+              <p className="text-sm text-on-surface-variant leading-relaxed">{selectedRoutinePreview.description}</p>
 
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 pt-2">
-                Sequenza Esercizi, Ripetizioni e Tempi di Recupero:
-              </h4>
+              <h4 className="text-sm font-semibold text-on-surface pt-2">Esercizi</h4>
 
-              <div className="space-y-2">
+              <div className="divide-y divide-outline-variant/60">
                 {selectedRoutinePreview.exercises.map((item, idx) => {
                   const ex = EXERCISES.find((e) => e.id === item.exerciseId);
                   return (
-                    <div
-                      key={idx}
-                      className="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-emerald-400">
+                    <div key={idx} className="py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-8 h-8 flex-shrink-0 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-sm font-semibold">
                           {idx + 1}
                         </span>
-                        <div>
-                          <p className="text-xs font-bold text-white">{ex?.name}</p>
-                          <p className="text-[11px] text-slate-400">
-                            {item.sets} serie • {item.reps} rip • <span className="text-emerald-400">recupero {item.restSeconds}s</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-on-surface">{ex?.name}</p>
+                          <p className="text-xs text-on-surface-variant">
+                            {item.sets} serie · {item.reps} rip · recupero {item.restSeconds}s
                           </p>
                         </div>
                       </div>
                       <button
-                        onClick={() => {
-                          setSelectedRoutinePreview(null);
-                          if (ex) onSelectExercisePreview(ex.id);
-                        }}
-                        className="text-xs text-cyan-400 font-semibold p-1.5"
+                        // Il dettaglio scheda resta aperto sotto: chiudendo la guida si torna all'elenco esercizi.
+                        onClick={() => ex && onSelectExercisePreview(ex.id)}
+                        className="btn-text px-3 text-xs"
                       >
                         Guida
                       </button>
@@ -297,16 +337,16 @@ export const WorkoutTab: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 pb-safe">
               <button
                 onClick={() => {
                   const target = selectedRoutinePreview;
                   setSelectedRoutinePreview(null);
                   onSelectRoutine(target);
                 }}
-                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-98 transition text-sm flex items-center justify-center gap-2"
+                className="btn-filled w-full h-14 text-base"
               >
-                <Play className="w-4 h-4 fill-current" /> Inizia Questa Scheda Ora
+                <Play className="w-5 h-5 fill-current" /> Inizia questa scheda
               </button>
             </div>
           </div>

@@ -19,11 +19,11 @@ const BODY_OUTLINE = toPoints([
 
 /** I colori seguono il tema (variabili definite in src/index.css). */
 const FILL = {
-  silhouette: 'var(--color-slate-800)',
-  idle: 'var(--color-slate-700)',
+  silhouette: 'var(--color-surface-container-highest)',
+  idle: 'var(--color-outline-variant)',
   primary: 'var(--fig-active)',
   secondary: 'var(--fig-active-far)',
-  edge: 'var(--color-slate-900)'
+  edge: 'var(--color-surface-container-high)'
 };
 
 const BodyView: React.FC<{ side: 'front' | 'back'; offsetX: number; fillFor: (r: MuscleRegion) => string; label: string }> = ({
@@ -53,7 +53,7 @@ const BodyView: React.FC<{ side: 'front' | 'back'; offsetX: number; fillFor: (r:
         );
       })
     )}
-    <text x={VIEW_WIDTH / 2} y="199" textAnchor="middle" fontSize="8" fontWeight="bold" style={{ fill: 'var(--color-slate-400)' }}>
+    <text x={VIEW_WIDTH / 2} y="199" textAnchor="middle" fontSize="8" fontWeight="bold" style={{ fill: 'var(--color-on-surface-variant)' }}>
       {label}
     </text>
   </g>
@@ -63,8 +63,8 @@ const LegendRow: React.FC<{ title: string; regions: MuscleRegion[]; dotColor: st
   regions.length === 0 ? null : (
     <div className="flex items-start gap-2">
       <span className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: dotColor }} />
-      <p className="text-xs text-slate-300 leading-relaxed">
-        <span className="font-bold text-white">{title}: </span>
+      <p className="text-xs text-on-surface-variant leading-relaxed">
+        <span className="font-semibold text-on-surface">{title}: </span>
         {regions.map((r) => MUSCLE_SHAPES[r].label).join(', ')}
       </p>
     </div>
