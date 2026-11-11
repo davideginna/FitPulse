@@ -14,6 +14,7 @@ Ad ogni release aggiornare anche "version" in package.json.
 ### Nuovo
 - Schede filtrabili per **difficoltà** (facile, media, difficile) e **durata**, con ordinamento: di base dalla più facile.
 - Pagina **Novità** (questa) per vedere cosa cambia a ogni aggiornamento.
+- Pulsante **bug** in alto per segnalare un problema (apre una issue su GitHub).
 
 ### Migliorato
 - Nuova grafica in stile **Material 3**: barre più pulite, pulsanti a pillola, dettagli che salgono dal basso.

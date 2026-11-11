@@ -49,3 +49,28 @@ export const CHANGELOG: ChangelogRelease[] = parseChangelog(changelogMarkdown);
 
 /** Versione più recente, cioè la prima release del file. */
 export const LATEST_VERSION: string = CHANGELOG[0]?.version ?? '';
+
+/** Repository GitHub dell'app: qui finiscono le segnalazioni di bug. */
+const REPOSITORY_URL = 'https://github.com/davideginna/FitPulse';
+
+/**
+ * Link per aprire una nuova issue su GitHub, già etichettata "bug" e con un
+ * modello da compilare. Contiene solo la versione dell'app: nessun dato personale.
+ */
+export function buildBugReportUrl(): string {
+  const body = [
+    `**Versione app:** ${LATEST_VERSION}`,
+    '',
+    '**Cosa è successo**',
+    '',
+    '',
+    '**Cosa ti aspettavi**',
+    '',
+    '',
+    '**Passi per riprodurre**',
+    '1. ',
+    ''
+  ].join('\n');
+  const params = new URLSearchParams({ labels: 'bug', body });
+  return `${REPOSITORY_URL}/issues/new?${params.toString()}`;
+}

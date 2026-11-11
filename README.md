@@ -72,7 +72,7 @@ Pulsante tavolozza in alto a destra: Smeraldo, Oceano, Tramonto, Viola, Carbone 
 
 ## Novità
 
-Le modifiche di ogni versione sono in [CHANGELOG.md](CHANGELOG.md), visibile anche nell'app (icona megafono in alto).
+Le modifiche di ogni versione sono in [CHANGELOG.md](CHANGELOG.md), visibile anche nell'app (icona megafono in alto). Per segnalare un problema usa l'icona bug accanto, che apre una issue su GitHub.
 
 ## Licenza
 

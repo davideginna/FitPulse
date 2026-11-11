@@ -9,12 +9,12 @@ import { ExerciseDetailModal } from './components/ExerciseDetailModal';
 import { RoutineBuilderModal } from './components/RoutineBuilderModal';
 import { ThemePicker } from './components/ThemePicker';
 import { ChangelogSheet } from './components/ChangelogSheet';
-import { LATEST_VERSION } from './utils/changelog';
+import { LATEST_VERSION, buildBugReportUrl } from './utils/changelog';
 import { useFreeTimer } from './hooks/useFreeTimer';
 import { Routine, Exercise } from './types';
 import { getAllRoutines, getLastSeenChangelogVersion, saveLastSeenChangelogVersion } from './utils/storage';
 import { EXERCISES } from './data/exercises';
-import { Flame, Download, WifiOff, Megaphone } from 'lucide-react';
+import { Flame, Download, WifiOff, Megaphone, Bug } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('workout');
@@ -147,6 +147,16 @@ export const App: React.FC = () => {
                 <span>Installa</span>
               </button>
             )}
+            <a
+              href={buildBugReportUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="icon-btn"
+              aria-label="Segnala un problema su GitHub"
+              title="Segnala un problema"
+            >
+              <Bug className="w-5 h-5" />
+            </a>
             <button onClick={openChangelog} className="icon-btn relative" aria-label="Novità dell'app" title="Novità">
               <Megaphone className="w-5 h-5" />
               {hasUnseenChanges && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error" aria-hidden="true" />}
