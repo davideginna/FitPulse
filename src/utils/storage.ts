@@ -2,6 +2,7 @@ import { WorkoutHistoryItem, UserStats, Routine, GoalId } from '../types';
 import { DEFAULT_GOAL, TRAINING_GOALS } from '../data/goals';
 import { PRESET_ROUTINES } from '../data/routines';
 import type { FreeTimerState } from '../hooks/useFreeTimer';
+import type { SavedWorkoutSession, WorkoutSession } from './workoutSession';
 
 const STORAGE_KEYS = {
   HISTORY: 'fitpulse_workout_history',
@@ -76,7 +77,7 @@ export function getUserStats(): UserStats {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.USER_STATS);
     return raw ? JSON.parse(raw) : {
-      currentWeightKg: 82,
+      currentWeightKg: 96,
       targetWeightKg: 75,
       workoutsCompleted: 0,
       totalMinutesTrained: 0,
@@ -84,7 +85,7 @@ export function getUserStats(): UserStats {
     };
   } catch {
     return {
-      currentWeightKg: 82,
+      currentWeightKg: 96,
       targetWeightKg: 75,
       workoutsCompleted: 0,
       totalMinutesTrained: 0,
@@ -133,6 +134,68 @@ export function getAllRoutines(): Routine[] {
   return [...PRESET_ROUTINES, ...custom];
 }
 
+// --- Allenamento in corso ---
+// Salvato a ogni cambio di stato, così se Android chiude l'app in background
+// l'allenamento si può riprendere (vedi restoreSession in workoutSession.ts).
+
+export function getSavedWorkoutSession(): SavedWorkoutSession | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVE_WORKOUT);
+    return raw ? (JSON.parse(raw) as SavedWorkoutSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveWorkoutSession(session: WorkoutSession): void {
+  try {
+    const saved: SavedWorkoutSession = { session, savedAt: Date.now() };
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_WORKOUT, JSON.stringify(saved));
+  } catch (e) {
+    console.error('Error saving active workout', e);
+  }
+}
+
+export function clearSavedWorkoutSession(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_WORKOUT);
+  } catch (e) {
+    console.error('Error clearing active workout', e);
+  }
+}
+
+// --- Preferenze dell'allenamento guidato ---
+
+export interface WorkoutPrefs {
+  /** Pausa di avvio prima di ogni esercizio, in secondi (0 = nessuna). */
+  prepareSec: number;
+  soundEnabled: boolean;
+}
+
+const WORKOUT_PREFS_KEY = 'fitpulse_workout_prefs';
+const DEFAULT_WORKOUT_PREFS: WorkoutPrefs = { prepareSec: 10, soundEnabled: true };
+
+export function getWorkoutPrefs(): WorkoutPrefs {
+  try {
+    const raw = localStorage.getItem(WORKOUT_PREFS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Partial<WorkoutPrefs>) : {};
+    return {
+      prepareSec: typeof parsed.prepareSec === 'number' ? parsed.prepareSec : DEFAULT_WORKOUT_PREFS.prepareSec,
+      soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : DEFAULT_WORKOUT_PREFS.soundEnabled
+    };
+  } catch {
+    return DEFAULT_WORKOUT_PREFS;
+  }
+}
+
+export function saveWorkoutPrefs(prefs: WorkoutPrefs): void {
+  try {
+    localStorage.setItem(WORKOUT_PREFS_KEY, JSON.stringify(prefs));
+  } catch (e) {
+    console.error('Error saving workout prefs', e);
+  }
+}
+
 // --- Timer libero (tab "Timer") ---
 // Chiave separata da STORAGE_KEYS: lo stato salvato contiene timestamp assoluti
 // (`endsAt`), così dopo un ricaricamento il timer riprende con il tempo giusto.
@@ -147,7 +210,7 @@ export function getFreeTimerState(): FreeTimerState | null {
     const parsed = JSON.parse(raw) as FreeTimerState;
     // Controllo minimo di forma: se il formato è cambiato si riparte dai valori predefiniti.
     const isValid =
-      (parsed.mode === 'rest' || parsed.mode === 'tabata') &&
+      (parsed.mode === 'rest' || parsed.mode === 'tabata' || parsed.mode === 'stopwatch') &&
       typeof parsed.restDurationSec === 'number' &&
       typeof parsed.workSec === 'number' &&
       typeof parsed.pauseSec === 'number' &&

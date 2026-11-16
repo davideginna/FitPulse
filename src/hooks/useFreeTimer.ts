@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { playCountdownBeep, playRestCompleteSound } from '../utils/audio';
+import { playCountdownBeep, playRestCompleteSound, playStartSound } from '../utils/audio';
 import { getFreeTimerState, saveFreeTimerState } from '../utils/storage';
+import { toCountdownSeconds } from '../utils/time';
 
 /**
  * Stato del timer libero (tab "Timer").
@@ -20,11 +21,24 @@ import { getFreeTimerState, saveFreeTimerState } from '../utils/storage';
  * - 'idle':    mai avviato o concluso; mostra la durata piena.
  * - 'running': `endsAt` è valorizzato.
  * - 'paused':  `pausedRemainingMs` contiene il tempo residuo.
+ *
+ * Il circuito HIIT parte con una pausa di avvio ('prepare'), poi alterna lavoro
+ * e riposo e finisce al termine dell'ultimo lavoro (niente riposo finale).
+ *
+ * Il cronometro segue la stessa idea al contrario: `startedAt` assoluto più il
+ * tempo già accumulato prima dell'ultima pausa.
  */
 
 export type TimerStatus = 'idle' | 'running' | 'paused';
-export type FreeTimerMode = 'rest' | 'tabata';
-export type TabataPhase = 'work' | 'rest';
+export type FreeTimerMode = 'rest' | 'tabata' | 'stopwatch';
+export type TabataPhase = 'prepare' | 'work' | 'rest';
+
+export interface Stopwatch {
+  /** Istante dell'ultimo avvio (Date.now() in ms); null se fermo. */
+  startedAt: number | null;
+  /** Tempo contato prima dell'ultimo avvio. */
+  accumulatedMs: number;
+}
 
 export interface Countdown {
   status: TimerStatus;
@@ -41,12 +55,14 @@ export interface FreeTimerState {
   restDurationSec: number;
   rest: Countdown;
   /** HIIT / Tabata */
+  prepareSec: number;
   workSec: number;
   pauseSec: number;
   totalRounds: number;
   tabataPhase: TabataPhase;
   tabataRound: number;
   tabata: Countdown;
+  stopwatch: Stopwatch;
 }
 
 const IDLE_COUNTDOWN: Countdown = { status: 'idle', endsAt: null, pausedRemainingMs: 0 };
@@ -56,12 +72,14 @@ export const DEFAULT_FREE_TIMER_STATE: FreeTimerState = {
   soundEnabled: true,
   restDurationSec: 60,
   rest: IDLE_COUNTDOWN,
+  prepareSec: 10,
   workSec: 30,
   pauseSec: 15,
   totalRounds: 8,
   tabataPhase: 'work',
   tabataRound: 1,
-  tabata: IDLE_COUNTDOWN
+  tabata: IDLE_COUNTDOWN,
+  stopwatch: { startedAt: null, accumulatedMs: 0 }
 };
 
 /** Ogni quanto controlliamo fine fase / beep finali. */
@@ -78,11 +96,6 @@ export function getRemainingMs(countdown: Countdown, fullMs: number, now: number
   return fullMs;
 }
 
-/** Secondi da mostrare: arrotondati per eccesso, così "0" compare solo alla fine. */
-export function toDisplaySeconds(ms: number): number {
-  return Math.ceil(ms / 1000);
-}
-
 export function getRestRemainingMs(state: FreeTimerState, now: number): number {
   return getRemainingMs(state.rest, state.restDurationSec * 1000, now);
 }
@@ -90,6 +103,11 @@ export function getRestRemainingMs(state: FreeTimerState, now: number): number {
 export function getTabataRemainingMs(state: FreeTimerState, now: number): number {
   // Da fermo il prossimo avvio parte sempre da una fase di lavoro.
   return getRemainingMs(state.tabata, state.workSec * 1000, now);
+}
+
+export function getStopwatchElapsedMs(state: FreeTimerState, now: number): number {
+  const { startedAt, accumulatedMs } = state.stopwatch;
+  return accumulatedMs + (startedAt !== null ? Math.max(0, now - startedAt) : 0);
 }
 
 /** Avvia o mette in pausa un conto alla rovescia. */
@@ -103,7 +121,7 @@ function toggleCountdown(countdown: Countdown, fullMs: number, now: number): Cou
 
 export interface FreeTimerControls {
   state: FreeTimerState;
-  /** true se almeno uno dei due timer sta scorrendo (usato anche per il badge in Navbar). */
+  /** true se un timer o il cronometro sta scorrendo (badge in Navbar, schermo acceso). */
   isAnyRunning: boolean;
   setMode: (mode: FreeTimerMode) => void;
   toggleSound: () => void;
@@ -113,13 +131,17 @@ export interface FreeTimerControls {
   addRestTime: (secs: number) => void;
   toggleTabata: () => void;
   resetTabata: () => void;
+  changePrepareSec: (deltaSec: number) => void;
   changeWorkSec: (deltaSec: number) => void;
   changePauseSec: (deltaSec: number) => void;
   changeTotalRounds: (delta: number) => void;
+  toggleStopwatch: () => void;
+  resetStopwatch: () => void;
 }
 
 export function useFreeTimer(): FreeTimerControls {
-  const [state, setState] = useState<FreeTimerState>(() => getFreeTimerState() ?? DEFAULT_FREE_TIMER_STATE);
+  // I valori predefiniti riempiono i campi aggiunti dopo che lo stato era stato salvato.
+  const [state, setState] = useState<FreeTimerState>(() => ({ ...DEFAULT_FREE_TIMER_STATE, ...getFreeTimerState() }));
 
   // Ultimo secondo per cui è stato emesso il beep finale (3-2-1), per non ripeterlo
   // a ogni tick dello stesso secondo.
@@ -131,17 +153,19 @@ export function useFreeTimer(): FreeTimerControls {
     saveFreeTimerState(state);
   }, [state]);
 
-  const isAnyRunning = state.rest.status === 'running' || state.tabata.status === 'running';
+  const isCountdownRunning = state.rest.status === 'running' || state.tabata.status === 'running';
+  const isAnyRunning = isCountdownRunning || state.stopwatch.startedAt !== null;
 
   // Il tick controlla solo le transizioni (fine recupero, cambio fase HIIT) e i beep.
   // Non salva "now" nello stato: così App non si ri-renderizza 4 volte al secondo;
   // è FreeTimerTab, quando visibile, ad aggiornare il display per conto suo.
   // L'effetto si ricrea a ogni cambio di `state`, quindi la closure vede sempre lo stato attuale.
   useEffect(() => {
-    if (!isAnyRunning) return;
+    // Il cronometro non ha scadenze né suoni: non serve il tick.
+    if (!isCountdownRunning) return;
 
     const beepIfLastSeconds = (which: 'rest' | 'tabata', remainingMs: number, frequency: number, duration: number) => {
-      const seconds = toDisplaySeconds(remainingMs);
+      const seconds = toCountdownSeconds(remainingMs);
       if (seconds >= 1 && seconds <= 3 && lastBeepSecondRef.current[which] !== seconds) {
         lastBeepSecondRef.current[which] = seconds;
         if (state.soundEnabled) playCountdownBeep(frequency, duration);
@@ -177,12 +201,16 @@ export function useFreeTimer(): FreeTimerControls {
         // fine teorica della precedente (`endsAt +=`), non da "now", per non accumulare ritardi.
         while (endsAt <= now) {
           phaseChanged = true;
-          if (phase === 'work') {
+          if (phase === 'prepare') {
+            phase = 'work';
+            endsAt += state.workSec * 1000;
+          } else if (phase === 'work') {
+            if (round >= state.totalRounds) {
+              finished = true;
+              break;
+            }
             phase = 'rest';
             endsAt += state.pauseSec * 1000;
-          } else if (round >= state.totalRounds) {
-            finished = true;
-            break;
           } else {
             round += 1;
             phase = 'work';
@@ -191,8 +219,12 @@ export function useFreeTimer(): FreeTimerControls {
         }
 
         if (phaseChanged) {
-          // Un solo suono anche se sono state recuperate più fasi insieme.
-          if (state.soundEnabled) playRestCompleteSound();
+          // Un solo suono anche se sono state recuperate più fasi insieme:
+          // "via" quando parte un lavoro, "fine" quando parte un riposo o finisce il circuito.
+          if (state.soundEnabled) {
+            if (!finished && phase === 'work') playStartSound();
+            else playRestCompleteSound();
+          }
           lastBeepSecondRef.current.tabata = null;
           if (finished) {
             setState((prev) => ({ ...prev, tabataPhase: 'work', tabataRound: 1, tabata: IDLE_COUNTDOWN }));
@@ -209,7 +241,7 @@ export function useFreeTimer(): FreeTimerControls {
     tick(); // subito, così dopo un reload con timer già scaduto non si aspetta il primo tick
     const interval = setInterval(tick, TICK_MS);
     return () => clearInterval(interval);
-  }, [state, isAnyRunning]);
+  }, [state, isCountdownRunning]);
 
   // --- Azioni ---
 
@@ -245,14 +277,30 @@ export function useFreeTimer(): FreeTimerControls {
   const toggleTabata = () => {
     lastBeepSecondRef.current.tabata = null;
     const now = Date.now();
-    // Da 'idle' si parte sempre da round 1, fase di lavoro (garantito da resetTabata / fine circuito).
-    setState((prev) => ({ ...prev, tabata: toggleCountdown(prev.tabata, prev.workSec * 1000, now) }));
+    setState((prev) => {
+      if (prev.tabata.status !== 'idle') {
+        return { ...prev, tabata: toggleCountdown(prev.tabata, 0, now) };
+      }
+      // Da 'idle' si parte sempre dal round 1 (garantito da resetTabata / fine circuito),
+      // con la pausa di avvio se impostata.
+      const startsWithPrepare = prev.prepareSec > 0;
+      const firstPhaseMs = (startsWithPrepare ? prev.prepareSec : prev.workSec) * 1000;
+      return {
+        ...prev,
+        tabataPhase: startsWithPrepare ? 'prepare' : 'work',
+        tabataRound: 1,
+        tabata: toggleCountdown(prev.tabata, firstPhaseMs, now)
+      };
+    });
   };
 
   const resetTabata = () =>
     setState((prev) => ({ ...prev, tabataPhase: 'work', tabataRound: 1, tabata: IDLE_COUNTDOWN }));
 
   // I nuovi parametri valgono dalla prossima fase; la fase in corso non viene accorciata.
+  const changePrepareSec = (deltaSec: number) =>
+    setState((prev) => ({ ...prev, prepareSec: Math.min(30, Math.max(0, prev.prepareSec + deltaSec)) }));
+
   const changeWorkSec = (deltaSec: number) =>
     setState((prev) => ({ ...prev, workSec: Math.max(10, prev.workSec + deltaSec) }));
 
@@ -261,6 +309,19 @@ export function useFreeTimer(): FreeTimerControls {
 
   const changeTotalRounds = (delta: number) =>
     setState((prev) => ({ ...prev, totalRounds: Math.max(1, prev.totalRounds + delta) }));
+
+  const toggleStopwatch = () => {
+    const now = Date.now();
+    setState((prev) => {
+      const isRunning = prev.stopwatch.startedAt !== null;
+      const stopwatch: Stopwatch = isRunning
+        ? { startedAt: null, accumulatedMs: getStopwatchElapsedMs(prev, now) }
+        : { startedAt: now, accumulatedMs: prev.stopwatch.accumulatedMs };
+      return { ...prev, stopwatch };
+    });
+  };
+
+  const resetStopwatch = () => setState((prev) => ({ ...prev, stopwatch: { startedAt: null, accumulatedMs: 0 } }));
 
   return {
     state,
@@ -273,8 +334,11 @@ export function useFreeTimer(): FreeTimerControls {
     addRestTime,
     toggleTabata,
     resetTabata,
+    changePrepareSec,
     changeWorkSec,
     changePauseSec,
-    changeTotalRounds
+    changeTotalRounds,
+    toggleStopwatch,
+    resetStopwatch
   };
 }

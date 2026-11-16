@@ -44,6 +44,37 @@ export function playCountdownBeep(frequency = 600, duration = 0.12) {
   }
 }
 
+/** Segnale di "via": due note acute ravvicinate, distinguibile dal suono di fine fase. */
+export function playStartSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    [0, 0.16].forEach((offset) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(988, ctx.currentTime + offset); // B5
+
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.14);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.14);
+    });
+
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 60, 200]);
+    }
+  } catch (e) {
+    console.debug('Audio error:', e);
+  }
+}
+
 export function playRestCompleteSound() {
   try {
     const ctx = getAudioContext();

@@ -16,7 +16,7 @@
  */
 import React from 'react';
 import { BendDirection, Point, distance, lerp, lerpPoint, polar, pt, repCurve, solveTwoBone } from './kinematics';
-import { ANKLE_Y, BODY, LimbGoal, PoseSpec, Skeleton, keyframePose, shoulderOf } from './skeleton';
+import { ANKLE_Y, BODY, LimbGoal, PoseSpec, Skeleton, keyframePose, mixPose, shoulderOf } from './skeleton';
 import { Bench, COLORS, Cable, Dumbbell, Kettlebell, Plate } from './equipment';
 
 export interface ExerciseAnimation {
@@ -1232,6 +1232,115 @@ const genericStanding: ExerciseAnimation = {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Stretching
+// ---------------------------------------------------------------------------
+
+/**
+ * Stretching: si passa lentamente dalla posa rilassata a quella di allungamento,
+ * la si tiene e si torna indietro. t=0.5 ("Picco") è l'allungamento completo.
+ */
+function stretchAnimation(caption: string, relaxed: PoseSpec, held: PoseSpec): ExerciseAnimation {
+  return {
+    durationSeconds: 7,
+    caption,
+    // Moltiplicare e limitare a 1 allarga il tratto in cui la posizione è tenuta.
+    pose: (t) => mixPose(relaxed, held, Math.min(1, repCurve(t) * 1.8))
+  };
+}
+
+const STRETCH_STAND_HIP = pt(120, 105);
+const STRETCH_STAND: PoseSpec = {
+  hip: STRETCH_STAND_HIP,
+  torsoAngle: -88,
+  ...armsHanging(shoulderOf(STRETCH_STAND_HIP, -88)),
+  ...feetOnFloor(124)
+};
+
+// Tallone al gluteo: la mano dello stesso lato tiene la caviglia.
+const QUAD_STRETCH_LEG = legFromAngles(STRETCH_STAND_HIP, 105, 155);
+const stretchQuadriceps = stretchAnimation('Tallone al gluteo', STRETCH_STAND, {
+  ...STRETCH_STAND,
+  nearLeg: QUAD_STRETCH_LEG,
+  nearArm: goal(QUAD_STRETCH_LEG.target, -1),
+  nearFootAngle: 200
+});
+
+// Piegamento in avanti: le braccia pendono dalle spalle (per questo le mani sono
+// calcolate a ogni istante dalla spalla, non interpolate fra due punti fissi).
+const stretchHamstrings: ExerciseAnimation = {
+  durationSeconds: 7,
+  caption: 'Schiena rilassata',
+  pose: (t) => {
+    const p = Math.min(1, repCurve(t) * 1.8);
+    // Il busto si ferma a 35° sotto l'orizzontale: più giù, di lato, coprirebbe le gambe.
+    const hip = lerpPoint(STRETCH_STAND_HIP, pt(108, 106), p);
+    const torsoAngle = lerp(-88, 35, p);
+    const shoulder = shoulderOf(hip, torsoAngle);
+    // Il braccio si accorcia man mano che la spalla si avvicina al pavimento.
+    const reach = Math.min(45, 168 - shoulder.y);
+    return {
+      hip,
+      torsoAngle,
+      nearArm: goal(polar(shoulder, reach, 90), -1),
+      farArm: goal(polar(shoulder, reach, 94), -1),
+      ...feetOnFloor(122)
+    };
+  }
+};
+
+// Affondo al muro: gamba dietro tesa con il tallone a terra.
+const CALF_WALL_X = 156;
+const CALF_HANDS = pt(CALF_WALL_X - 2, 74);
+const calfStretchPose = (hip: Point, torsoAngle: number): PoseSpec => ({
+  hip,
+  torsoAngle,
+  nearArm: goal(CALF_HANDS, -1),
+  farArm: goal(pt(CALF_HANDS.x, CALF_HANDS.y + 3), -1),
+  nearLeg: goal(pt(122, ANKLE_Y), 1),
+  farLeg: goal(pt(72, ANKLE_Y), 1)
+});
+const stretchCalves: ExerciseAnimation = {
+  ...stretchAnimation('Tallone dietro a terra', calfStretchPose(pt(98, 110), -76), calfStretchPose(pt(100, 112), -70)),
+  behind: () => (
+    <line x1={CALF_WALL_X} y1="175" x2={CALF_WALL_X} y2="30" style={{ stroke: COLORS.equipmentDark }} strokeWidth="5" />
+  )
+};
+
+// Mani intrecciate dietro la schiena, petto aperto.
+const chestStretchPose = (torsoAngle: number, hands: Point, neckOffset: number): PoseSpec => ({
+  hip: STRETCH_STAND_HIP,
+  torsoAngle,
+  neckOffset,
+  nearArm: goal(hands, 1),
+  farArm: goal(hands, 1),
+  ...feetOnFloor(124)
+});
+const stretchChest = stretchAnimation(
+  'Petto in fuori',
+  chestStretchPose(-88, pt(108, 106), 0),
+  chestStretchPose(-93, pt(97, 98), -12)
+);
+
+// Posizione del bambino: da carponi il bacino va verso i talloni. Ginocchia e
+// caviglie restano a terra (tibia appoggiata), si muovono solo anca e busto.
+const CHILD_ANKLE = pt(79, ANKLE_Y);
+const childPose = (hip: Point, torsoAngle: number, hands: Point): PoseSpec => ({
+  hip,
+  torsoAngle,
+  nearArm: goal(hands, -1),
+  farArm: goal(pt(hands.x - 4, hands.y), -1),
+  nearLeg: goal(CHILD_ANKLE, 1),
+  farLeg: goal(pt(CHILD_ANKLE.x + 3, CHILD_ANKLE.y), 1),
+  nearFootAngle: 180,
+  farFootAngle: 180
+});
+const stretchBack = stretchAnimation(
+  'Bacino verso i talloni',
+  childPose(pt(106, 137.5), 0, pt(152, 170)),
+  childPose(pt(84, 151.5), 18, pt(170, 170))
+);
+
 /** Chiave = `svgType` dell'esercizio; 'squat_dumbbell' è la variante con manubri dello squat. */
 export const ANIMATIONS: Record<string, ExerciseAnimation> = {
   squat: squatBarbell,
@@ -1272,7 +1381,12 @@ export const ANIMATIONS: Record<string, ExerciseAnimation> = {
   stationary_bike: stationaryBike,
   recumbent_bike: recumbentBike,
   elliptical,
-  stair_climber: stairClimber
+  stair_climber: stairClimber,
+  stretch_quadriceps: stretchQuadriceps,
+  stretch_hamstrings: stretchHamstrings,
+  stretch_calves: stretchCalves,
+  stretch_chest: stretchChest,
+  stretch_back: stretchBack
 };
 
 export function getExerciseAnimation(key: string): ExerciseAnimation {

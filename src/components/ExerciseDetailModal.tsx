@@ -16,7 +16,8 @@ export const ExerciseDetailModal: React.FC<Props> = ({
   onStartWithExercise
 }) => {
   const metrics = [
-    { icon: RotateCcw, label: 'Ripetizioni', value: exercise.recommendedReps },
+    // "30 sec" / "10 min" sono durate, non ripetizioni.
+    { icon: RotateCcw, label: /sec|min/.test(exercise.recommendedReps) ? 'Durata' : 'Ripetizioni', value: exercise.recommendedReps },
     { icon: Clock, label: 'Recupero', value: `${exercise.recommendedRestSeconds}s` },
     { icon: Flame, label: 'Consumo', value: exercise.calorieBurnRating }
   ];
@@ -53,6 +54,16 @@ export const ExerciseDetailModal: React.FC<Props> = ({
               </div>
             ))}
           </div>
+
+          {exercise.startingWeight && (
+            <p className="text-sm text-on-surface bg-surface-container-high rounded-xl p-3">
+              🏋️ Peso di partenza consigliato:{' '}
+              <strong>
+                {exercise.startingWeight.kg} kg {exercise.startingWeight.note}
+              </strong>
+              . Aumenta di 1-2 kg quando chiudi tutte le serie con margine.
+            </p>
+          )}
 
           <section>
             <h4 className="text-base font-semibold text-on-surface mb-3">Muscoli coinvolti</h4>

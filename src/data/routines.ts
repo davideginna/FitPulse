@@ -1,6 +1,61 @@
 import { Routine } from '../types';
 
 export const PRESET_ROUTINES: Routine[] = [
+  // --- SEDUTE DA UN'ORA: riscaldamento + aerobico e pesi + stretching finale ---
+  // Durata calcolata con 10 s di pausa di avvio e ~45 s per serie a ripetizioni:
+  // circa 60 minuti fino all'ultimo esercizio, più ~7 minuti di stretching.
+  {
+    id: 'one_hour_fat_loss_a',
+    title: '⏱️ Ora Brucia Grassi A: Tapis & Total Body',
+    subtitle: '60 min con riscaldamento + stretching finale',
+    description: 'Seduta completa a basso impatto: riscaldamento sul tapis roulant, camminata in salita, tre esercizi con i pesi per non perdere muscolo, addome e cyclette finale. Si chiude con lo stretching guidato.',
+    goal: 'Dimagrimento con lavoro aerobico',
+    level: 'Principiante',
+    estimatedDurationMinutes: 65,
+    estimatedCaloriesBurn: 500,
+    tags: ['1 ora', 'Aerobico', 'Riscaldamento', 'Stretching', 'Basso impatto'],
+    goals: ['dimagrire', 'resistenza'],
+    exercises: [
+      { exerciseId: 'treadmill', sets: 1, reps: '8 min', restSeconds: 30, section: 'Riscaldamento', notes: 'Camminata facile: 4,5-5 km/h senza pendenza, aumenta piano negli ultimi minuti' },
+      { exerciseId: 'treadmill', sets: 1, reps: '15 min', restSeconds: 60, notes: 'Camminata in salita: 5-5,5 km/h, pendenza 5-6%. Devi riuscire a parlare a frasi brevi' },
+      { exerciseId: 'squat', sets: 3, reps: '12', restSeconds: 60, notes: 'Manubri lungo i fianchi, scendi in 3 secondi' },
+      { exerciseId: 'lat_machine', sets: 3, reps: '12', restSeconds: 60, notes: 'Tira al petto, gomiti verso i fianchi' },
+      { exerciseId: 'shoulder_press', sets: 3, reps: '12', restSeconds: 60, notes: 'Seduto con schienale, addome attivo' },
+      { exerciseId: 'plank', sets: 3, reps: '30 sec', restSeconds: 45, notes: 'Se è troppo, appoggia le ginocchia' },
+      { exerciseId: 'stationary_bike', sets: 1, reps: '12 min', restSeconds: 60, notes: 'Ritmo costante, resistenza media: fiato corto ma controllato' },
+      { exerciseId: 'stretch_quadriceps', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Una serie per gamba' },
+      { exerciseId: 'stretch_hamstrings', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Lasciati scendere, senza molleggiare' },
+      { exerciseId: 'stretch_calves', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Una serie per gamba, tallone dietro a terra' },
+      { exerciseId: 'stretch_chest', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Scapole vicine, respiro ampio' },
+      { exerciseId: 'stretch_back', sets: 1, reps: '60 sec', restSeconds: 10, section: 'Stretching', notes: 'Respira lento con la pancia' }
+    ]
+  },
+  {
+    id: 'one_hour_fat_loss_b',
+    title: '⏱️ Ora Brucia Grassi B: Ellittica & Forza',
+    subtitle: '60 min con riscaldamento + stretching finale',
+    description: 'Da alternare alla seduta A: riscaldamento in cyclette, ellittica, pressa, rematore e panca con carichi leggeri, addome e camminata in salita finale. Si chiude con lo stretching guidato.',
+    goal: 'Dimagrimento con lavoro aerobico',
+    level: 'Principiante',
+    estimatedDurationMinutes: 65,
+    estimatedCaloriesBurn: 500,
+    tags: ['1 ora', 'Aerobico', 'Riscaldamento', 'Stretching', 'Basso impatto'],
+    goals: ['dimagrire', 'resistenza'],
+    exercises: [
+      { exerciseId: 'stationary_bike', sets: 1, reps: '8 min', restSeconds: 30, section: 'Riscaldamento', notes: 'Pedalata sciolta con poca resistenza' },
+      { exerciseId: 'elliptical', sets: 1, reps: '15 min', restSeconds: 60, notes: 'Ritmo costante: devi riuscire a parlare a frasi brevi' },
+      { exerciseId: 'leg_press', sets: 3, reps: '12', restSeconds: 60, notes: 'Non bloccare le ginocchia in alto' },
+      { exerciseId: 'row', sets: 3, reps: '12 per braccio', restSeconds: 60, notes: 'Schiena piatta, gomito vicino al fianco' },
+      { exerciseId: 'bench_press', sets: 3, reps: '12', restSeconds: 60, notes: 'Carico leggero, discesa controllata' },
+      { exerciseId: 'dead_bug', sets: 3, reps: '30 sec', restSeconds: 45, notes: 'Zona lombare sempre appoggiata a terra' },
+      { exerciseId: 'treadmill', sets: 1, reps: '12 min', restSeconds: 60, notes: 'Camminata in salita: 5 km/h, pendenza 5-6%' },
+      { exerciseId: 'stretch_quadriceps', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Una serie per gamba' },
+      { exerciseId: 'stretch_hamstrings', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Lasciati scendere, senza molleggiare' },
+      { exerciseId: 'stretch_calves', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Una serie per gamba, tallone dietro a terra' },
+      { exerciseId: 'stretch_chest', sets: 2, reps: '30 sec', restSeconds: 10, section: 'Stretching', notes: 'Scapole vicine, respiro ampio' },
+      { exerciseId: 'stretch_back', sets: 1, reps: '60 sec', restSeconds: 10, section: 'Stretching', notes: 'Respira lento con la pancia' }
+    ]
+  },
   {
     id: 'fat_burn_fullbody',
     title: '🔥 Brucia Grassi Full-Body Express',

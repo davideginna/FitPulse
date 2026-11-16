@@ -1,344 +1,489 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Check, 
-  Clock, 
-  Info, 
-  CheckCircle2, 
-  X,
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Pause,
+  Play,
+  Plus,
+  SkipForward,
   Trophy,
-  Dumbbell
+  Volume2,
+  VolumeX,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { Routine, Exercise, WorkoutSetRecord, ExerciseLog, WorkoutHistoryItem } from '../types';
+import { Exercise, WorkoutHistoryItem } from '../types';
 import { EXERCISES } from '../data/exercises';
 import { ExerciseIllustration } from './ExerciseIllustration';
-import { RestTimerModal } from './RestTimerModal';
 import { ExerciseDetailModal } from './ExerciseDetailModal';
+import { ConfirmModal } from './ConfirmModal';
+import { MuscleMap } from './muscleMap/MuscleMap';
+import { useWorkoutSession } from '../hooks/useWorkoutSession';
+import { useScreenWakeLock } from '../hooks/useScreenWakeLock';
 import { playSuccessChime } from '../utils/audio';
-import { saveWorkoutHistory } from '../utils/storage';
+import { clearSavedWorkoutSession, getUserStats, saveWorkoutHistory } from '../utils/storage';
+import { formatClock, formatDuration, toCountdownSeconds } from '../utils/time';
+import {
+  SessionPhase,
+  WorkoutSession,
+  buildHistoryItem,
+  countCompletedSets,
+  getPhaseElapsedMs,
+  getPhaseRemainingMs,
+  getTotalElapsedMs
+} from '../utils/workoutSession';
 
 interface Props {
-  routine: Routine;
+  /** Sessione nuova (createSession) o ripristinata dopo la chiusura dell'app (restoreSession). */
+  initialSession: WorkoutSession;
   onFinish: () => void;
   onCancel: () => void;
 }
 
-export const ActiveWorkoutView: React.FC<Props> = ({
-  routine,
-  onFinish,
-  onCancel
-}) => {
-  const [currentExIndex, setCurrentExIndex] = useState(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [activeTimerRest, setActiveTimerRest] = useState<{
-    show: boolean;
-    seconds: number;
-    setNum: number;
-    totalSets: number;
-  }>({
-    show: false,
-    seconds: 60,
-    setNum: 1,
-    totalSets: 3
-  });
+/** Fasi mostrate nel riquadro principale ('finished' apre il riepilogo). */
+type VisiblePhase = Exclude<SessionPhase, 'finished'>;
+
+const PHASE_LOOK: Record<VisiblePhase, { label: string; cardClass: string }> = {
+  prepare: { label: 'Preparati', cardClass: 'bg-surface-container-highest text-on-surface' },
+  work: { label: 'Esecuzione', cardClass: 'bg-primary-container text-on-primary-container' },
+  rest: { label: 'Recupero', cardClass: 'bg-secondary-container text-on-secondary-container' }
+};
+
+const PREPARE_OPTIONS_SEC = [0, 5, 10, 15, 20];
+/** Peso corporeo usato per la stima delle calorie se l'utente non l'ha indicato in "Guida & Dati". */
+const FALLBACK_BODY_WEIGHT_KG = 80;
+
+function findExercise(exerciseId: string): Exercise {
+  return EXERCISES.find((exercise) => exercise.id === exerciseId) || EXERCISES[0];
+}
+
+/** "12" → "12 rip"; i testi che dicono già cosa fare ("10 per gamba", "max") restano uguali. */
+function formatRepsTarget(reps: string): string {
+  return /^[\d\s-]+$/.test(reps) ? `${reps} rip` : reps;
+}
+
+/**
+ * Allenamento guidato a tutto schermo. In alto il riquadro della fase (pausa di
+ * avvio, esecuzione, recupero) con il tempo e l'esercizio da fare; sotto
+ * animazione, serie e muscoli coinvolti. Il tempo e le regole stanno in
+ * useWorkoutSession / utils/workoutSession.ts: qui c'è solo l'interfaccia.
+ */
+export const ActiveWorkoutView: React.FC<Props> = ({ initialSession, onFinish, onCancel }) => {
+  const workout = useWorkoutSession(initialSession);
+  const { session, steps, now, soundEnabled } = workout;
+
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showFinishModal, setShowFinishModal] = useState(false);
-  const [completedWorkoutItem, setCompletedWorkoutItem] = useState<WorkoutHistoryItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'cancel' | 'finish' | null>(null);
+  const [summary, setSummary] = useState<WorkoutHistoryItem | null>(null);
 
-  // Initialize logs state for each exercise in the routine
-  const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>(() => {
-    return routine.exercises.map((item) => {
-      const sets: WorkoutSetRecord[] = Array.from({ length: item.sets }, (_, idx) => ({
-        setNumber: idx + 1,
-        targetReps: item.reps,
-        completedReps: parseInt(item.reps) || 12,
-        weightKg: 0,
-        completed: false
-      }));
-      return {
-        exerciseId: item.exerciseId,
-        sets
-      };
-    });
-  });
+  const isFinished = session.phase === 'finished';
+  const isPaused = session.pausedAt !== null;
+  useScreenWakeLock(!isFinished && !isPaused);
 
-  // Elapsed workout timer
+  // La pagina eredita lo scorrimento dell'elenco schede: si riparte dall'alto, dove c'è il tempo.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
+    window.scrollTo(0, 0);
   }, []);
 
-  const currentRoutineEx = routine.exercises[currentExIndex];
-  const currentExerciseData: Exercise = 
-    EXERCISES.find((e) => e.id === currentRoutineEx?.exerciseId) || EXERCISES[0];
-
-  const currentExLog = exerciseLogs[currentExIndex];
-
-  const handleSetToggle = (setIndex: number) => {
-    const updatedLogs = [...exerciseLogs];
-    const targetSet = updatedLogs[currentExIndex].sets[setIndex];
-    const isNowCompleted = !targetSet.completed;
-    targetSet.completed = isNowCompleted;
-
-    setExerciseLogs(updatedLogs);
-
-    // If just marked completed, trigger rest timer
-    if (isNowCompleted) {
-      const restSec = currentRoutineEx.restSeconds || currentExerciseData.recommendedRestSeconds || 60;
-      setActiveTimerRest({
-        show: true,
-        seconds: restSec,
-        setNum: setIndex + 1,
-        totalSets: currentExLog.sets.length
-      });
-    }
-  };
-
-  const handleRepsChange = (setIndex: number, val: number) => {
-    const updated = [...exerciseLogs];
-    updated[currentExIndex].sets[setIndex].completedReps = Math.max(0, val);
-    setExerciseLogs(updated);
-  };
-
-  const handleWeightChange = (setIndex: number, val: number) => {
-    const updated = [...exerciseLogs];
-    updated[currentExIndex].sets[setIndex].weightKg = Math.max(0, val);
-    setExerciseLogs(updated);
-  };
-
-  const formatElapsed = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  const handleCompleteWorkout = () => {
-    // Calculate stats
-    let totalVolume = 0;
-    let completedSetsCount = 0;
-    exerciseLogs.forEach((log) => {
-      log.sets.forEach((s) => {
-        if (s.completed) {
-          completedSetsCount++;
-          totalVolume += s.completedReps * s.weightKg;
-        }
-      });
-    });
-
-    // Approximate calories: ~7-8 kcal/min for circuit/metabolic training
-    const estimatedCals = Math.max(80, Math.round((elapsedSeconds / 60) * 7.5));
-
-    const historyItem: WorkoutHistoryItem = {
-      id: 'wkt_' + Date.now(),
-      routineTitle: routine.title,
-      startTime: new Date(Date.now() - elapsedSeconds * 1000).toISOString(),
-      endTime: new Date().toISOString(),
-      durationSeconds: elapsedSeconds,
-      estimatedCalories: estimatedCals,
-      totalVolumeKg: totalVolume,
-      exercisesCompletedCount: routine.exercises.length,
-      logs: exerciseLogs
-    };
-
+  // Fine allenamento (ultima serie o "Termina"): salva una sola volta e mostra il riepilogo.
+  const hasSavedRef = useRef(false);
+  useEffect(() => {
+    if (!isFinished || hasSavedRef.current) return;
+    hasSavedRef.current = true;
+    const bodyWeightKg = getUserStats().currentWeightKg || FALLBACK_BODY_WEIGHT_KG;
+    const historyItem = buildHistoryItem(session, Date.now(), bodyWeightKg);
     saveWorkoutHistory(historyItem);
-    setCompletedWorkoutItem(historyItem);
-    setShowFinishModal(true);
+    setSummary(historyItem);
+    if (soundEnabled) playSuccessChime();
+    confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+  }, [isFinished, session, soundEnabled]);
 
-    // Play celebration audio and shoot confetti!
-    playSuccessChime();
-    confetti({
-      particleCount: 90,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+  const step = steps[session.stepIndex];
+  const nextStep = session.stepIndex < steps.length - 1 ? steps[session.stepIndex + 1] : null;
+  // Durante il recupero conta quello che viene dopo: mostriamo già l'esercizio successivo.
+  const shownStep = session.phase === 'rest' && nextStep ? nextStep : step;
+  const shownRoutineExercise = session.routine.exercises[shownStep.exerciseIndex];
+  const shownExercise = findExercise(shownRoutineExercise.exerciseId);
+  const shownLog = session.logs[shownStep.exerciseIndex];
+  const currentRoutineExercise = session.routine.exercises[step.exerciseIndex];
+
+  // Peso della serie mostrata (proposto all'avvio, modificabile nell'elenco serie).
+  const shownWeightKg = shownLog.sets[shownStep.setIndex].weightKg;
+  const shownWeightText =
+    shownStep.workSec === null && shownWeightKg > 0
+      ? `${shownWeightKg} kg${shownExercise.startingWeight ? ` ${shownExercise.startingWeight.note}` : ''}`
+      : null;
+
+  const phase: VisiblePhase = isFinished ? 'work' : (session.phase as VisiblePhase);
+  const look = PHASE_LOOK[phase];
+
+  const remainingMs = getPhaseRemainingMs(session, now);
+  const isCountdown = remainingMs !== null;
+  const shownSeconds = isCountdown ? toCountdownSeconds(remainingMs) : Math.floor(getPhaseElapsedMs(session, now) / 1000);
+  const totalSeconds = Math.floor(getTotalElapsedMs(session, now) / 1000);
+  const isEnding = isCountdown && shownSeconds <= 3 && !isPaused;
+
+  const completedSets = countCompletedSets(session);
+  const progressPercent = (completedSets / steps.length) * 100;
+
+  // I minuti in più hanno senso solo nelle esecuzioni lunghe (cardio); altrove 15 secondi.
+  const extraTimeSec = phase === 'work' && step.workSec !== null && step.workSec >= 300 ? 60 : 15;
+
+  let phaseHint: string;
+  if (isPaused) phaseHint = 'In pausa';
+  else if (phase === 'prepare') phaseHint = 'Mettiti in posizione';
+  else if (phase === 'rest') phaseHint = 'Respira e bevi';
+  else if (step.workSec !== null) phaseHint = `Obiettivo ${formatDuration(step.workSec)}`;
+  else phaseHint = `Obiettivo ${formatRepsTarget(currentRoutineExercise.reps)}`;
+
+  let primaryLabel: string;
+  if (phase === 'prepare') primaryLabel = 'Parti ora';
+  else if (phase === 'rest') primaryLabel = 'Salta recupero';
+  else if (step.workSec !== null) primaryLabel = 'Concludi ora';
+  else primaryLabel = 'Serie fatta';
+
+  // Cosa succede dopo la fase corrente (riga sotto il riquadro).
+  let upNext: string;
+  if (phase === 'rest') {
+    upNext = `Completata: serie ${step.setIndex + 1} di ${step.totalSets} · ${findExercise(currentRoutineExercise.exerciseId).name}`;
+  } else if (!nextStep) {
+    upNext = 'Ultima serie: poi hai finito!';
+  } else {
+    const restText = step.restSec > 0 ? `recupero ${formatDuration(step.restSec)}, poi ` : '';
+    const nextText =
+      nextStep.exerciseIndex === step.exerciseIndex
+        ? `serie ${nextStep.setIndex + 1} di ${nextStep.totalSets}`
+        : findExercise(session.routine.exercises[nextStep.exerciseIndex].exerciseId).name;
+    upNext = `Poi: ${restText}${nextText}`;
+  }
+
+  // Le tre fasi con la durata prevista; quella attiva è evidenziata. L'esecuzione è
+  // quella dell'esercizio mostrato: durante il recupero è già la prossima da fare.
+  const phaseTiles: { id: VisiblePhase; label: string; value: string }[] = [
+    { id: 'prepare', label: 'Avvio', value: session.prepareSec > 0 ? `${session.prepareSec}s` : '—' },
+    {
+      id: 'work',
+      label: 'Esecuzione',
+      value:
+        shownStep.workSec !== null ? formatDuration(shownStep.workSec) : formatRepsTarget(shownRoutineExercise.reps)
+    },
+    { id: 'rest', label: 'Recupero', value: step.restSec > 0 ? formatDuration(step.restSec) : '—' }
+  ];
+
+  const leaveWorkout = () => {
+    clearSavedWorkoutSession();
+    onCancel();
   };
 
-  const nextExName = 
-    currentExIndex < routine.exercises.length - 1 
-      ? EXERCISES.find(e => e.id === routine.exercises[currentExIndex + 1]?.exerciseId)?.name 
-      : undefined;
+  const requestCancel = () => {
+    // Senza serie fatte non c'è niente da perdere: si esce subito.
+    if (completedSets === 0) leaveWorkout();
+    else setConfirmAction('cancel');
+  };
 
-  const progressPercent = ((currentExIndex + 1) / routine.exercises.length) * 100;
+  const confirmFinish = () => {
+    setConfirmAction(null);
+    // Un allenamento senza serie completate non va nello storico.
+    if (completedSets === 0) leaveWorkout();
+    else workout.finishNow();
+  };
+
+  const lastExerciseIndex = session.routine.exercises.length - 1;
 
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col pb-28">
-      {/* Top app bar: annulla, tempo trascorso, termina */}
-      <div className="sticky top-0 z-30 bg-surface px-2 h-16 flex items-center justify-between gap-2">
-        <button onClick={onCancel} className="icon-btn" aria-label="Annulla allenamento" title="Annulla">
+      {/* Top app bar: annulla, tempo totale, suono, termina */}
+      <div className="sticky top-0 z-30 bg-surface px-2 h-16 flex items-center justify-between gap-1">
+        <button onClick={requestCancel} className="icon-btn" aria-label="Abbandona allenamento" title="Abbandona">
           <X className="w-6 h-6" />
         </button>
 
-        <div className="flex items-center gap-2 text-on-surface">
-          <Clock className="w-4 h-4 text-primary" />
-          <span className="text-lg font-medium tabular-nums">{formatElapsed(elapsedSeconds)}</span>
+        <div className="flex flex-col items-center leading-tight">
+          <span className="text-xs text-on-surface-variant">Tempo totale</span>
+          <span className="text-lg font-medium tabular-nums">{formatClock(totalSeconds)}</span>
         </div>
 
-        <button onClick={handleCompleteWorkout} className="btn-text">
-          Termina
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={workout.toggleSound}
+            className="icon-btn"
+            aria-label={soundEnabled ? 'Disattiva suono' : 'Attiva suono'}
+            title={soundEnabled ? 'Suono attivo' : 'Suono disattivato'}
+          >
+            {soundEnabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5" />}
+          </button>
+          <button onClick={() => setConfirmAction('finish')} className="btn-text">
+            Termina
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-md mx-auto w-full">
+      <div className="max-w-md mx-auto w-full px-4 space-y-4">
         {/* Titolo scheda e avanzamento */}
-        <div className="px-4 pb-3">
+        <div>
           <div className="flex items-center justify-between text-sm text-on-surface-variant mb-2 gap-2">
-            <span className="truncate">{routine.title}</span>
+            <span className="truncate">{session.routine.title}</span>
             <span className="flex-shrink-0 font-medium text-on-surface">
-              {currentExIndex + 1} / {routine.exercises.length}
+              Esercizio {step.exerciseIndex + 1} / {session.routine.exercises.length}
             </span>
           </div>
-          {/* Indicatore di avanzamento lineare M3 */}
-          <div className="w-full bg-secondary-container h-1 rounded-full overflow-hidden">
+          <div className="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
             <div className="bg-primary h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
 
-        {/* Esercizio corrente */}
-        <div className="px-4">
-          <div className="card p-4">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className="min-w-0">
-                <p className="text-xs text-on-surface-variant">
-                  {currentExerciseData.category} · {currentExerciseData.equipment}
-                </p>
-                <h2 className="text-xl font-semibold text-on-surface leading-snug">{currentExerciseData.name}</h2>
-              </div>
-              <button onClick={() => setShowDetailModal(true)} className="btn-tonal min-h-9 px-3 text-xs flex-shrink-0">
-                <Info className="w-4 h-4" />
-                Guida
-              </button>
-            </div>
-
-            <ExerciseIllustration exercise={currentExerciseData} figureHeightClass="h-44" className="w-full mb-3" />
-
-            <div className="flex items-center justify-between text-sm text-on-surface-variant">
-              <span>
-                Obiettivo <strong className="text-on-surface font-semibold">{currentRoutineEx.reps} rip</strong>
-              </span>
-              <span>
-                Recupero <strong className="text-on-surface font-semibold">{currentRoutineEx.restSeconds}s</strong>
-              </span>
-            </div>
-
-            {currentRoutineEx.notes && (
-              <p className="text-sm bg-primary-container text-on-primary-container rounded-xl p-3 mt-3">💡 {currentRoutineEx.notes}</p>
-            )}
+        {/* Riquadro della fase: cosa sto facendo, per quanto, quale esercizio */}
+        <div className={`rounded-3xl p-5 text-center transition-colors ${look.cardClass}`}>
+          <div className="flex items-center justify-between text-sm font-semibold">
+            <span className="uppercase tracking-wide">{look.label}</span>
+            <span>
+              Serie {shownStep.setIndex + 1} di {shownStep.totalSets}
+            </span>
           </div>
-        </div>
 
-        {/* Registro serie */}
-        <div className="px-4 mt-5">
-          <h3 className="text-base font-semibold text-on-surface mb-2 flex items-center gap-2">
-            <Dumbbell className="w-5 h-5 text-primary" /> Serie
-          </h3>
+          <div
+            className={`text-8xl font-normal tabular-nums leading-none mt-4 ${isEnding ? 'text-error' : ''} ${isPaused ? 'opacity-50' : ''}`}
+            role="timer"
+          >
+            {formatClock(shownSeconds)}
+          </div>
+          <p className="text-sm font-medium opacity-80 mt-2">{phaseHint}</p>
 
-          <div className="space-y-2">
-            {currentExLog?.sets.map((set, sIdx) => (
+          <p className="text-xs opacity-80 mt-4">
+            {phase === 'rest' ? 'Prossimo esercizio' : 'Esercizio'}
+            {shownRoutineExercise.section && ` · ${shownRoutineExercise.section}`}
+          </p>
+          <h2 className="text-2xl font-semibold leading-snug">{shownExercise.name}</h2>
+          {shownWeightText && <p className="text-base font-semibold mt-1">🏋️ {shownWeightText}</p>}
+
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {phaseTiles.map((tile) => (
               <div
-                key={sIdx}
-                className={`flex items-center justify-between gap-2 p-2 pl-3 rounded-2xl transition-colors ${
-                  set.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container'
-                }`}
+                key={tile.id}
+                className={`rounded-xl px-1 py-2 ${tile.id === phase ? 'bg-surface text-on-surface' : 'bg-surface/30'}`}
+                aria-current={tile.id === phase ? 'step' : undefined}
               >
-                <span className="w-8 h-8 flex-shrink-0 rounded-full bg-surface/40 flex items-center justify-center text-sm font-semibold">
-                  {set.setNumber}
-                </span>
-
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={set.weightKg || ''}
-                    onChange={(e) => handleWeightChange(sIdx, parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                    className="text-field w-16 h-10 px-1 text-center font-semibold"
-                    aria-label={`Peso serie ${set.setNumber}`}
-                  />
-                  <span className="text-xs opacity-80">kg</span>
-                </label>
-
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={set.completedReps || ''}
-                    onChange={(e) => handleRepsChange(sIdx, parseInt(e.target.value) || 0)}
-                    placeholder="12"
-                    className="text-field w-16 h-10 px-1 text-center font-semibold"
-                    aria-label={`Ripetizioni serie ${set.setNumber}`}
-                  />
-                  <span className="text-xs opacity-80">rip</span>
-                </label>
-
-                <button
-                  onClick={() => handleSetToggle(sIdx)}
-                  className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition active:scale-90 ${
-                    set.completed ? 'bg-primary text-on-primary' : 'border border-outline text-on-surface-variant hover:bg-on-surface/8'
-                  }`}
-                  aria-pressed={set.completed}
-                  aria-label={`Serie ${set.setNumber} completata`}
-                >
-                  <Check className="w-6 h-6 stroke-[2.5]" />
-                </button>
+                <p className="text-xs opacity-80">{tile.label}</p>
+                <p className="text-sm font-semibold truncate">{tile.value}</p>
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Barra inferiore: esercizio precedente / successivo */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface-container pb-safe">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <button
-            onClick={() => setCurrentExIndex((prev) => Math.max(0, prev - 1))}
-            disabled={currentExIndex === 0}
-            className="btn-outlined h-12"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Indietro
-          </button>
-
-          {currentExIndex < routine.exercises.length - 1 ? (
-            <button onClick={() => setCurrentExIndex((prev) => prev + 1)} className="btn-filled h-12 flex-1">
-              Successivo
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <button onClick={handleCompleteWorkout} className="btn-filled h-12 flex-1">
-              <CheckCircle2 className="w-5 h-5" />
-              Completa scheda
+          {isCountdown && (
+            <button onClick={() => workout.addTime(extraTimeSec)} className="btn-text text-current mt-3">
+              <Plus className="w-4 h-4" />
+              {formatDuration(extraTimeSec)}
             </button>
           )}
         </div>
+
+        <p className="text-sm text-on-surface-variant text-center">{upNext}</p>
+
+        {shownRoutineExercise.notes && (
+          <p className="text-sm bg-surface-container text-on-surface rounded-xl p-3">💡 {shownRoutineExercise.notes}</p>
+        )}
+
+        {/* Come si fa: animazione */}
+        <ExerciseIllustration
+          key={shownExercise.id}
+          exercise={shownExercise}
+          figureHeightClass="h-44"
+          className="w-full"
+        />
+
+        {/* Serie dell'esercizio mostrato; kg e ripetizioni solo se l'esercizio è a ripetizioni */}
+        <section>
+          <h3 className="text-base font-semibold text-on-surface mb-2">Serie</h3>
+          {shownStep.workSec === null && shownExercise.startingWeight && (
+            <p className="text-sm text-on-surface-variant mb-2">
+              Il peso proposto è l'ultimo che hai usato (la prima volta: {shownExercise.startingWeight.kg} kg{' '}
+              {shownExercise.startingWeight.note}). Se chiudi tutte le serie con 2-3 ripetizioni di margine, la
+              prossima volta aumenta di 1-2 kg; se non arrivi alle ripetizioni, scendi.
+            </p>
+          )}
+          <div className="space-y-2">
+            {shownLog.sets.map((set, setIndex) => {
+              const isCurrentSet = setIndex === shownStep.setIndex;
+              return (
+                <div
+                  key={setIndex}
+                  className={`flex items-center gap-3 min-h-14 p-2 pl-3 rounded-2xl ${
+                    set.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container'
+                  } ${isCurrentSet ? 'outline outline-2 outline-primary' : ''}`}
+                >
+                  <span className="w-8 h-8 flex-shrink-0 rounded-full bg-surface/40 flex items-center justify-center text-sm font-semibold">
+                    {set.completed ? <Check className="w-4 h-4 stroke-[3]" /> : set.setNumber}
+                  </span>
+
+                  {shownStep.workSec !== null ? (
+                    <span className="text-sm flex-1">
+                      {set.completed && set.durationSeconds !== undefined
+                        ? `Fatto in ${formatClock(set.durationSeconds)}`
+                        : `Obiettivo ${formatDuration(shownStep.workSec)}`}
+                    </span>
+                  ) : (
+                    <>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          value={set.weightKg || ''}
+                          onChange={(event) =>
+                            workout.updateSet(shownStep.exerciseIndex, setIndex, {
+                              weightKg: Math.max(0, parseFloat(event.target.value) || 0)
+                            })
+                          }
+                          placeholder="0"
+                          className="text-field w-16 h-10 px-1 text-center font-semibold"
+                          aria-label={`Peso serie ${set.setNumber}`}
+                        />
+                        <span className="text-xs opacity-80">kg</span>
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          value={set.completedReps || ''}
+                          onChange={(event) =>
+                            workout.updateSet(shownStep.exerciseIndex, setIndex, {
+                              completedReps: Math.max(0, parseInt(event.target.value, 10) || 0)
+                            })
+                          }
+                          placeholder="0"
+                          className="text-field w-16 h-10 px-1 text-center font-semibold"
+                          aria-label={`Ripetizioni serie ${set.setNumber}`}
+                        />
+                        <span className="text-xs opacity-80">rip</span>
+                      </label>
+                      {set.completed && set.durationSeconds !== undefined && (
+                        <span className="text-xs opacity-80 ml-auto pr-2 tabular-nums">{formatClock(set.durationSeconds)}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Muscoli coinvolti e guida completa */}
+        <section>
+          <h3 className="text-base font-semibold text-on-surface mb-2">Muscoli coinvolti</h3>
+          <MuscleMap
+            primary={shownExercise.primaryMuscles}
+            secondary={shownExercise.secondaryMuscles}
+            className="bg-surface-container rounded-2xl p-3 mb-3"
+          />
+          <div className="flex flex-wrap gap-2 mb-3">
+            {shownExercise.targetMuscles.map((muscle) => (
+              <span key={muscle} className="chip h-7 text-xs">
+                {muscle}
+              </span>
+            ))}
+          </div>
+          <button onClick={() => setShowDetailModal(true)} className="btn-tonal w-full">
+            <Info className="w-4 h-4" />
+            Guida completa: esecuzione ed errori da evitare
+          </button>
+        </section>
+
+        {/* Durata della pausa di avvio */}
+        <section>
+          <h3 className="text-base font-semibold text-on-surface">Pausa di avvio</h3>
+          <p className="text-sm text-on-surface-variant mb-2">
+            Conto alla rovescia prima di ogni esercizio, per metterti in posizione.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {PREPARE_OPTIONS_SEC.map((seconds) => {
+              const isSelected = session.prepareSec === seconds;
+              return (
+                <button
+                  key={seconds}
+                  onClick={() => workout.changePrepareSec(seconds)}
+                  aria-pressed={isSelected}
+                  className={isSelected ? 'chip-selected' : 'chip'}
+                >
+                  {isSelected && <Check className="w-4 h-4" />}
+                  {seconds === 0 ? 'No' : `${seconds}s`}
+                </button>
+              );
+            })}
+          </div>
+        </section>
       </div>
 
-      {/* Rest Timer Modal when triggered */}
-      {activeTimerRest.show && (
-        <RestTimerModal
-          initialSeconds={activeTimerRest.seconds}
-          exerciseName={currentExerciseData.name}
-          nextExerciseName={nextExName}
-          setNumber={activeTimerRest.setNum}
-          totalSets={activeTimerRest.totalSets}
-          onComplete={() => setActiveTimerRest((prev) => ({ ...prev, show: false }))}
-          onClose={() => setActiveTimerRest((prev) => ({ ...prev, show: false }))}
+      {/* Barra inferiore: esercizio precedente, pausa, azione della fase, esercizio successivo */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface-container pb-safe">
+        <div className="max-w-md mx-auto px-3 py-3 flex items-center gap-2">
+          <button
+            onClick={() => workout.goToExercise(step.exerciseIndex - 1)}
+            disabled={step.exerciseIndex === 0}
+            className="icon-btn w-12 h-12 disabled:opacity-40"
+            aria-label="Esercizio precedente"
+            title="Esercizio precedente"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={workout.togglePause}
+            className="btn-tonal w-14 h-14 p-0"
+            aria-label={isPaused ? 'Riprendi' : 'Pausa'}
+            title={isPaused ? 'Riprendi' : 'Pausa'}
+          >
+            {isPaused ? <Play className="w-6 h-6 fill-current" /> : <Pause className="w-6 h-6" />}
+          </button>
+
+          <button onClick={workout.finishPhase} className="btn-filled h-14 flex-1 text-base">
+            {phase === 'work' ? <CheckCircle2 className="w-5 h-5" /> : <SkipForward className="w-5 h-5" />}
+            {primaryLabel}
+          </button>
+
+          <button
+            onClick={() => workout.goToExercise(step.exerciseIndex + 1)}
+            disabled={step.exerciseIndex >= lastExerciseIndex}
+            className="icon-btn w-12 h-12 disabled:opacity-40"
+            aria-label="Esercizio successivo"
+            title="Esercizio successivo"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      {showDetailModal && <ExerciseDetailModal exercise={shownExercise} onClose={() => setShowDetailModal(false)} />}
+
+      {confirmAction === 'cancel' && (
+        <ConfirmModal
+          title="Abbandonare l'allenamento?"
+          message="Le serie fatte finora non verranno salvate nello storico. Per salvarle usa «Termina»."
+          confirmLabel="Abbandona"
+          onConfirm={leaveWorkout}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
 
-      {/* Exercise Detail Modal */}
-      {showDetailModal && (
-        <ExerciseDetailModal
-          exercise={currentExerciseData}
-          onClose={() => setShowDetailModal(false)}
+      {confirmAction === 'finish' && (
+        <ConfirmModal
+          title="Terminare l'allenamento?"
+          message={
+            completedSets === 0
+              ? 'Non hai ancora completato nessuna serie: l\'allenamento non verrà salvato.'
+              : `Hai completato ${completedSets} serie su ${steps.length}. L'allenamento verrà salvato nello storico.`
+          }
+          confirmLabel="Termina"
+          onConfirm={confirmFinish}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
 
       {/* Riepilogo finale (dialog) */}
-      {showFinishModal && completedWorkoutItem && (
+      {summary && (
         <div className="scrim flex items-center justify-center p-6">
           <div className="dialog w-full max-w-sm text-center">
             <div className="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mx-auto mb-4">
@@ -350,10 +495,10 @@ export const ActiveWorkoutView: React.FC<Props> = ({
 
             <div className="grid grid-cols-2 gap-2 mb-6">
               {[
-                { label: 'Durata', value: `${Math.round(completedWorkoutItem.durationSeconds / 60)} min` },
-                { label: 'Calorie stimate', value: `~${completedWorkoutItem.estimatedCalories}` },
-                { label: 'Volume', value: `${completedWorkoutItem.totalVolumeKg} kg` },
-                { label: 'Esercizi', value: String(completedWorkoutItem.exercisesCompletedCount) }
+                { label: 'Durata', value: formatClock(summary.durationSeconds) },
+                { label: 'Calorie stimate', value: `~${summary.estimatedCalories}` },
+                { label: 'Serie completate', value: `${completedSets} / ${steps.length}` },
+                { label: 'Volume', value: `${summary.totalVolumeKg} kg` }
               ].map((cell) => (
                 <div key={cell.label} className="bg-surface-container-highest rounded-xl p-3">
                   <p className="text-lg font-semibold text-on-surface tabular-nums">{cell.value}</p>
@@ -362,13 +507,7 @@ export const ActiveWorkoutView: React.FC<Props> = ({
               ))}
             </div>
 
-            <button
-              onClick={() => {
-                setShowFinishModal(false);
-                onFinish();
-              }}
-              className="btn-filled w-full h-12"
-            >
+            <button onClick={onFinish} className="btn-filled w-full h-12">
               Vai ai progressi
             </button>
           </div>

@@ -11,15 +11,28 @@ import { ThemePicker } from './components/ThemePicker';
 import { ChangelogSheet } from './components/ChangelogSheet';
 import { LATEST_VERSION, buildBugReportUrl } from './utils/changelog';
 import { useFreeTimer } from './hooks/useFreeTimer';
+import { useScreenWakeLock } from './hooks/useScreenWakeLock';
+import { getSuggestedWeights } from './utils/weights';
+import { WorkoutSession, createSession, restoreSession } from './utils/workoutSession';
 import { Routine, Exercise } from './types';
-import { getAllRoutines, getLastSeenChangelogVersion, saveLastSeenChangelogVersion } from './utils/storage';
+import {
+  getAllRoutines,
+  getLastSeenChangelogVersion,
+  getSavedWorkoutSession,
+  getWorkoutHistory,
+  getWorkoutPrefs,
+  saveLastSeenChangelogVersion
+} from './utils/storage';
 import { EXERCISES } from './data/exercises';
 import { Flame, Download, WifiOff, Megaphone, Bug } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('workout');
   const [routines, setRoutines] = useState<Routine[]>(() => getAllRoutines());
-  const [activeWorkout, setActiveWorkout] = useState<Routine | null>(null);
+  // Allenamento in corso. All'avvio riprende quello interrotto se l'app era stata chiusa a metà.
+  const [activeWorkout, setActiveWorkout] = useState<WorkoutSession | null>(() =>
+    restoreSession(getSavedWorkoutSession(), Date.now())
+  );
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -27,6 +40,7 @@ export const App: React.FC = () => {
   // Il timer della tab "Timer" vive qui (non in FreeTimerTab) perché la tab viene
   // smontata quando si cambia tab: così continua a scorrere e a suonare ovunque.
   const freeTimer = useFreeTimer();
+  useScreenWakeLock(freeTimer.isAnyRunning);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   // Pallino sul pulsante "Novità" finché l'utente non ha visto l'ultima versione.
   const [hasUnseenChanges, setHasUnseenChanges] = useState(() => getLastSeenChangelogVersion() !== LATEST_VERSION);
@@ -70,7 +84,9 @@ export const App: React.FC = () => {
   };
 
   const handleStartWorkout = (routine: Routine) => {
-    setActiveWorkout(routine);
+    if (routine.exercises.length === 0) return;
+    const suggestedWeights = getSuggestedWeights(routine, getWorkoutHistory());
+    setActiveWorkout(createSession(routine, getWorkoutPrefs().prepareSec, Date.now(), suggestedWeights));
   };
 
   const handleFinishWorkout = () => {
@@ -105,14 +121,14 @@ export const App: React.FC = () => {
       ]
     };
     setSelectedExercise(null);
-    setActiveWorkout(singleRoutine);
+    handleStartWorkout(singleRoutine);
   };
 
   // If there's an active live workout session, render full screen
   if (activeWorkout) {
     return (
       <ActiveWorkoutView
-        routine={activeWorkout}
+        initialSession={activeWorkout}
         onFinish={handleFinishWorkout}
         onCancel={() => setActiveWorkout(null)}
       />

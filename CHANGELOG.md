@@ -9,6 +9,28 @@ L'app capisce solo questo formato:
 Ad ogni release aggiornare anche "version" in package.json.
 -->
 
+## 1.4.0 — 2026-11-16
+
+### Nuovo
+- **Allenamento guidato**: lo schermo mostra in grande la fase (pausa di avvio, esecuzione, recupero), il tempo e l'esercizio da fare, e passa da solo alla fase successiva con i segnali sonori.
+- Gli esercizi **a tempo** (tapis roulant, cyclette, plank…) hanno il loro conto alla rovescia; quelli a ripetizioni un cronometro che si ferma con «Serie fatta».
+- **Pausa** dell'intero allenamento, durata della pausa di avvio a scelta, tempo extra con un tocco.
+- **Pesi consigliati** per ogni esercizio: la prima volta un carico di partenza, poi l'ultimo peso che hai usato.
+- Due sedute da un'ora **«Ora Brucia Grassi» A e B**: riscaldamento, lavoro aerobico e pesi, **stretching** finale guidato.
+- 5 esercizi di **stretching** con animazione (quadricipiti, femorali, polpacci, petto e spalle, schiena).
+- **Cronometro** nella tab Timer; il timer HIIT ora ha la pausa di avvio e mostra quanto manca alla fine.
+- Lo **schermo resta acceso** durante l'allenamento e con un timer in corso.
+- Se l'app viene chiusa a metà allenamento, alla riapertura lo ritrovi in pausa dove l'avevi lasciato.
+- Muscoli coinvolti visibili direttamente nella schermata di allenamento.
+
+### Corretto
+- Il timer di recupero poteva bloccarsi o andare fuori tempo durante l'allenamento.
+- Il tempo totale perdeva secondi a schermo spento o con l'app in background.
+- Il timer HIIT aggiungeva un riposo inutile dopo l'ultimo round.
+- «X» e «Termina» ora chiedono conferma: prima un tocco per sbaglio faceva perdere l'allenamento.
+- Calorie stimate in base al tuo peso (impostalo in Guida & Dati); niente più minimo fisso di 80 kcal.
+- Gli esercizi contati nello storico sono solo quelli davvero fatti.
+
 ## 1.3.0 — 2026-11-11
 
 ### Nuovo

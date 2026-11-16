@@ -52,11 +52,13 @@ Ogni push sul branch `main` pubblica automaticamente l'app su GitHub Pages (work
   - **Errori comuni da evitare** per prevenire infortuni.
   - **Sezione speciale:** *"Focus Dimagrimento & Pancia Piatta"*.
 
-### 3. ⏱️ Timer di Recupero Automatico & Segnali Acustici
-- Non appena completi una serie, si avvia in automatico il conto alla rovescia del recupero calibrato (es. 45s, 60s, 75s).
-- **Segnale acustico sonoro (Beep 3, 2, 1 + Suono finale)** generato nativamente tramite Web Audio API (funziona anche con cuffie o telefono posato).
-- Vibrazione aptica su dispositivi mobili supportati.
-- Pulsanti rapidi `+15s`, `-15s`, riduci a icona e salta recupero.
+### 3. ⏱️ Allenamento Guidato & Segnali Acustici
+- Ogni serie passa da **pausa di avvio → esecuzione → recupero**: lo schermo mostra fase, tempo ed esercizio da fare e avanza da solo.
+- Esercizi a tempo (tapis roulant, cyclette, plank) con conto alla rovescia; esercizi a ripetizioni con cronometro e «Serie fatta».
+- **Segnale acustico (Beep 3, 2, 1 + suono di via e di fine)** generato con Web Audio API, più vibrazione dove supportata.
+- Pausa, tempo extra, salto di fase o di esercizio; lo schermo resta acceso e l'allenamento si riprende se l'app viene chiusa.
+- Sedute da un'ora con riscaldamento e stretching finale, pesi consigliati per ogni esercizio.
+- Tab Timer: recupero, intervalli HIIT e cronometro.
 
 ### 4. 📝 Registro Serie e Carichi
 - Segna i **kg sollevati** e le **ripetizioni effettive** per ogni serie.

@@ -320,7 +320,8 @@ export const WorkoutTab: React.FC<Props> = ({
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-on-surface">{ex?.name}</p>
                           <p className="text-xs text-on-surface-variant">
-                            {item.sets} serie · {item.reps} rip · recupero {item.restSeconds}s
+                            {item.section ? `${item.section} · ` : ''}
+                            {item.sets} serie · {/^[\d\s-]+$/.test(item.reps) ? `${item.reps} rip` : item.reps} · recupero {item.restSeconds}s
                           </p>
                         </div>
                       </div>

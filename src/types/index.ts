@@ -5,7 +5,8 @@ export type MuscleGroup =
   | 'Spalle'
   | 'Braccia'
   | 'Addome & Core'
-  | 'Cardio & Metabolico';
+  | 'Cardio & Metabolico'
+  | 'Stretching & Mobilità';
 
 export type Equipment = 
   | 'Bilanciere'
@@ -55,6 +56,12 @@ export interface Exercise {
   defaultSets: number;
   recommendedReps: string;
   recommendedRestSeconds: number;
+  /**
+   * Carico di partenza per un principiante, solo per gli esercizi con pesi.
+   * `note` dice a cosa si riferisce (es. "per manubrio"). In allenamento viene
+   * proposto finché non c'è un peso già usato nello storico (vedi utils/weights.ts).
+   */
+  startingWeight?: { kg: number; note: string };
   description: string;
   instructions: string[];
   tipsForFatLoss: string;
@@ -98,7 +105,12 @@ export interface Exercise {
     | 'hollow_hold'
     | 'v_ups'
     | 'heel_touches'
-    | 'recumbent_bike';
+    | 'recumbent_bike'
+    | 'stretch_quadriceps'
+    | 'stretch_hamstrings'
+    | 'stretch_calves'
+    | 'stretch_chest'
+    | 'stretch_back';
 }
 
 export interface RoutineExercise {
@@ -107,6 +119,8 @@ export interface RoutineExercise {
   reps: string;
   restSeconds: number;
   notes?: string;
+  /** Parte della seduta, mostrata durante l'allenamento. Assente = allenamento vero e proprio. */
+  section?: 'Riscaldamento' | 'Stretching';
 }
 
 /** Obiettivi di allenamento selezionabili (elenco e testi in src/data/goals.ts). */
@@ -136,6 +150,8 @@ export interface WorkoutSetRecord {
   completedReps: number;
   weightKg: number;
   completed: boolean;
+  /** Durata effettiva dell'esecuzione, misurata dalla sessione guidata. Assente negli allenamenti salvati prima della 1.4.0. */
+  durationSeconds?: number;
 }
 
 export interface ExerciseLog {

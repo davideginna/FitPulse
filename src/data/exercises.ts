@@ -15,6 +15,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 4,
     recommendedReps: '10 - 12',
     recommendedRestSeconds: 75,
+    startingWeight: { kg: 10, note: 'per manubrio' },
     description: 'Il re degli esercizi per bruciare calorie. Coinvolge i muscoli più grandi del corpo stimolando il metabolismo anche ore dopo l\'allenamento.',
     instructions: [
       'Posiziona i piedi alla larghezza delle spalle con le punte leggermente extraruotate.',
@@ -43,6 +44,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 4,
     recommendedReps: '10 - 12',
     recommendedRestSeconds: 75,
+    startingWeight: { kg: 20, note: 'dischi in totale sul multipower' },
     description: 'Squat con il bilanciere che scorre su guide verticali. La traiettoria fissa dà sicurezza e permette di concentrarsi sulla spinta delle gambe anche senza esperienza col bilanciere libero.',
     instructions: [
       'Posiziona il bilanciere sui trapezi (non sul collo) e sblocca i ganci ruotando i polsi.',
@@ -71,6 +73,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 30, note: 'carico della macchina' },
     description: 'Macchina da seduti in cui si stringono le gambe contro i cuscinetti posti all\'interno delle ginocchia. Tonifica l\'interno coscia.',
     instructions: [
       'Siediti con la schiena ben appoggiata allo schienale e afferra le maniglie laterali.',
@@ -99,6 +102,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '15 - 20',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 30, note: 'carico della macchina' },
     description: 'Macchina da seduti in cui si allargano le gambe spingendo contro i cuscinetti posti all\'esterno delle ginocchia. Lavora i glutei laterali e stabilizza il bacino.',
     instructions: [
       'Siediti con la schiena appoggiata e afferra le maniglie laterali.',
@@ -127,6 +131,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 per gamba',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 6, note: 'per manubrio' },
     description: 'Esercizio dinamico unilaterale che accelera il battito cardiaco, tonifica i glutei e richiede un continuo controllo addominale per l\'equilibrio.',
     instructions: [
       'Impugna due manubri ai lati del corpo con postura eretta e spalle basse.',
@@ -154,6 +159,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 4,
     recommendedReps: '8 - 10',
     recommendedRestSeconds: 90,
+    startingWeight: { kg: 30, note: 'bilanciere compreso' },
     description: 'Esercizio globale che recluta quasi tutti i muscoli posteriori del corpo. Massimizza il rilascio ormonale anabolico e lipolitico.',
     instructions: [
       'Piedi sotto il bilanciere, tibia a 2-3 cm dalla sbarra.',
@@ -181,6 +187,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 20, note: 'bilanciere compreso' },
     description: 'Focalizzato sulla catena posteriore con grande attivazione dei glutei e dispendio energetico elevato.',
     instructions: [
       'Appoggia la parte centrale della schiena su una panca robusta, bilanciere posizionato sul bacino con imbottitura.',
@@ -208,6 +215,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 60, note: 'dischi in totale' },
     description: 'Permette di spingere carichi consistenti in totale sicurezza, favorendo l\'esaurimento delle fibre muscolari e il consumo calorico.',
     instructions: [
       'Siediti sulla macchina con la schiena e la testa ben adese allo schienale.',
@@ -237,6 +245,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 4,
     recommendedReps: '10 - 12',
     recommendedRestSeconds: 75,
+    startingWeight: { kg: 30, note: 'bilanciere compreso' },
     description: 'Il fondamentale di spinta per la parte superiore. Costruisce massa magra sul torace, aumentando il metabolismo basale.',
     instructions: [
       'Sdraiati sulla panca con occhi sotto il bilanciere, piedi saldi a terra.',
@@ -294,6 +303,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 4,
     recommendedReps: '10 - 12',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 35, note: 'carico della macchina' },
     description: 'Sviluppa la larghezza della schiena, migliora la postura eretta e stimola grandi masse muscolari bruciando calorie.',
     instructions: [
       'Siediti regolando i rulli sulle cosce per rimanere bloccato a terra.',
@@ -322,6 +332,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '10 - 12 per lato',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 10, note: 'manubrio' },
     description: 'Esercizio unilaterale di spessore per la schiena. Rafforza la muscolatura posturale e richiede stabilità rotazionale del core.',
     instructions: [
       'Appoggia ginocchio e mano omologa sulla panca, schiena parallela al terreno.',
@@ -351,6 +362,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '10 - 12',
     recommendedRestSeconds: 60,
+    startingWeight: { kg: 6, note: 'per manubrio' },
     description: 'Costruisce spalle rotonde e toniche, attivando il torchio addominale per stabilizzare il corpo in posizione eretta o seduta.',
     instructions: [
       'Seduto su panca a 80-85° o in piedi, manubri all\'altezza delle spalle.',
@@ -378,6 +390,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 6, note: 'per manubrio' },
     description: 'Tonifica le braccia e rinforza la presa. Ideale inserito in superset metabolico.',
     instructions: [
       'In piedi, manubri ai lati del corpo con palmi rivolti uno verso l\'altro (presa neutra).',
@@ -405,6 +418,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 15, note: 'carico del cavo' },
     description: 'Isola i tricipiti eliminando il rilassamento cutaneo posteriore delle braccia.',
     instructions: [
       'Di fronte alla carrucola alta, impugna la corda o la sbarra dritta.',
@@ -462,6 +476,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '20 alternati',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 4, note: 'manubrio o disco' },
     description: 'Lavora sui muscoli rotatori del tronco e definisce i fianchi, aumentando la stabilità del core e la spesa calorica.',
     instructions: [
       'Siediti sul tappetino con ginocchia piegate e talloni leggermente sollevati o sfioranti il suolo.',
@@ -824,6 +839,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '15 - 20',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 10, note: 'kettlebell' },
     description: 'Il bruciatore di grassi per eccellenza. Un movimento balistico dell\'anca che fa schizzare la frequenza cardiaca.',
     instructions: [
       'Piedi poco più larghi delle spalle, impugna il kettlebell a due mani.',
@@ -1044,6 +1060,7 @@ export const EXERCISES: Exercise[] = [
     defaultSets: 3,
     recommendedReps: '12 - 15',
     recommendedRestSeconds: 45,
+    startingWeight: { kg: 3, note: 'per manubrio' },
     description: 'Esercizio fondamentale di tonificazione con manubri leggeri (2-5 kg) per snellire e definire le spalle, donando eleganza e postura aperta al busto.',
     instructions: [
       'In piedi, piedi larghezza spalle, impugna due manubri leggeri lungo i fianchi.',
@@ -1057,6 +1074,144 @@ export const EXERCISES: Exercise[] = [
       'Sollevare le mani più in alto dei gomiti disattivando i deltoidi'
     ],
     svgType: 'lateral_raises'
+  },
+
+  // --- STRETCHING (defaticamento a fine seduta) ---
+  {
+    id: 'stretch_quadriceps',
+    name: 'Stretching Quadricipiti in Piedi',
+    category: 'Stretching & Mobilità',
+    equipment: 'Corpo Libero',
+    difficulty: 'Principiante',
+    targetMuscles: ['Quadricipiti', 'Flessori dell\'anca'],
+    primaryMuscles: ['quadricipiti'],
+    secondaryMuscles: ['flessori_anca'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 2,
+    recommendedReps: '30 sec',
+    recommendedRestSeconds: 10,
+    description: 'Allunga la parte davanti della coscia dopo camminata, cyclette e squat. Una serie per gamba.',
+    instructions: [
+      'In piedi, appoggiati con una mano a un muro o a una macchina per l\'equilibrio.',
+      'Piega un ginocchio e afferra la caviglia con la mano dello stesso lato.',
+      'Porta il tallone verso il gluteo tenendo le ginocchia vicine e il bacino dritto.',
+      'Tieni la posizione respirando lentamente, poi cambia gamba.'
+    ],
+    tipsForFatLoss: 'Lo stretching non brucia grassi, ma riduce la rigidità del giorno dopo: così ti alleni con più costanza, che è ciò che fa dimagrire.',
+    commonMistakes: [
+      'Inarcare la schiena invece di allungare la coscia',
+      'Tirare a scatti: l\'allungamento deve essere fermo e senza dolore'
+    ],
+    svgType: 'stretch_quadriceps'
+  },
+  {
+    id: 'stretch_hamstrings',
+    name: 'Stretching Femorali (Piegamento in Avanti)',
+    category: 'Stretching & Mobilità',
+    equipment: 'Corpo Libero',
+    difficulty: 'Principiante',
+    targetMuscles: ['Femorali', 'Polpacci', 'Zona lombare'],
+    primaryMuscles: ['femorali'],
+    secondaryMuscles: ['polpacci', 'lombari'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 2,
+    recommendedReps: '30 sec',
+    recommendedRestSeconds: 10,
+    description: 'Allunga la parte dietro delle cosce e scarica la schiena dopo il lavoro in piedi.',
+    instructions: [
+      'In piedi, piedi alla larghezza del bacino e ginocchia appena morbide.',
+      'Piegati in avanti dalle anche lasciando scendere busto e braccia verso i piedi.',
+      'Rilassa collo e spalle: non serve toccare terra, basta sentire tirare dietro le cosce.',
+      'Risali lentamente srotolando la schiena.'
+    ],
+    tipsForFatLoss: 'Femorali meno rigidi significano camminata e squat più comodi: riesci a fare più lavoro aerobico senza fastidi alla schiena.',
+    commonMistakes: [
+      'Molleggiare per scendere di più',
+      'Bloccare le ginocchia in iperestensione',
+      'Risalire di scatto (può girare la testa)'
+    ],
+    svgType: 'stretch_hamstrings'
+  },
+  {
+    id: 'stretch_calves',
+    name: 'Stretching Polpacci al Muro',
+    category: 'Stretching & Mobilità',
+    equipment: 'Corpo Libero',
+    difficulty: 'Principiante',
+    targetMuscles: ['Polpacci', 'Tendine d\'Achille'],
+    primaryMuscles: ['polpacci'],
+    secondaryMuscles: [],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 2,
+    recommendedReps: '30 sec',
+    recommendedRestSeconds: 10,
+    description: 'Indispensabile dopo tapis roulant ed ellittica: i polpacci portano tutto il peso del corpo a ogni passo. Una serie per gamba.',
+    instructions: [
+      'Mani al muro all\'altezza del petto, una gamba avanti piegata e l\'altra indietro tesa.',
+      'Tieni il tallone della gamba dietro ben premuto a terra, punta del piede in avanti.',
+      'Sposta il bacino verso il muro finché senti tirare il polpaccio dietro.',
+      'Tieni la posizione, poi cambia gamba.'
+    ],
+    tipsForFatLoss: 'Polpacci e caviglie elastici proteggono da fastidi a tendini e pianta del piede, i primi a fermare chi cammina molto per dimagrire.',
+    commonMistakes: [
+      'Staccare il tallone dietro da terra',
+      'Ruotare il piede dietro verso l\'esterno'
+    ],
+    svgType: 'stretch_calves'
+  },
+  {
+    id: 'stretch_chest',
+    name: 'Stretching Petto e Spalle (Mani dietro la Schiena)',
+    category: 'Stretching & Mobilità',
+    equipment: 'Corpo Libero',
+    difficulty: 'Principiante',
+    targetMuscles: ['Pettorali', 'Deltoidi anteriori'],
+    primaryMuscles: ['pettorali'],
+    secondaryMuscles: ['deltoidi'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 2,
+    recommendedReps: '30 sec',
+    recommendedRestSeconds: 10,
+    description: 'Apre petto e spalle dopo spinte e trazioni e contrasta la postura chiusa da scrivania.',
+    instructions: [
+      'In piedi, intreccia le dita dietro la schiena.',
+      'Avvicina le scapole e allontana le mani dai glutei sollevandole un poco.',
+      'Petto in fuori, mento parallelo al pavimento, addome leggermente attivo.',
+      'Tieni la posizione respirando in modo ampio.'
+    ],
+    tipsForFatLoss: 'Una postura più aperta fa respirare meglio durante il lavoro aerobico.',
+    commonMistakes: [
+      'Inarcare la zona lombare per alzare di più le mani',
+      'Alzare le spalle verso le orecchie'
+    ],
+    svgType: 'stretch_chest'
+  },
+  {
+    id: 'stretch_back',
+    name: 'Posizione del Bambino (Stretching Schiena)',
+    category: 'Stretching & Mobilità',
+    equipment: 'Corpo Libero',
+    difficulty: 'Principiante',
+    targetMuscles: ['Zona lombare', 'Dorsali', 'Glutei'],
+    primaryMuscles: ['lombari', 'dorsali'],
+    secondaryMuscles: ['glutei'],
+    calorieBurnRating: 'Moderata',
+    defaultSets: 1,
+    recommendedReps: '60 sec',
+    recommendedRestSeconds: 10,
+    description: 'Chiusura della seduta: allunga tutta la schiena e riporta giù respiro e battito.',
+    instructions: [
+      'In ginocchio sul tappetino, mani a terra sotto le spalle.',
+      'Porta il bacino indietro verso i talloni lasciando le mani dove sono.',
+      'Appoggia la fronte (o avvicinala) al tappetino e allunga le braccia in avanti.',
+      'Respira lentamente con la pancia. Se le ginocchia danno fastidio, tieni il bacino più alto.'
+    ],
+    tipsForFatLoss: 'Chiudere con un minuto di respiro lento abbassa lo stress di fine allenamento e aiuta il recupero per la seduta successiva.',
+    commonMistakes: [
+      'Trattenere il respiro',
+      'Forzare il bacino sui talloni con dolore alle ginocchia'
+    ],
+    svgType: 'stretch_back'
   }
 ];
 
@@ -1067,5 +1222,6 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   'Petto',
   'Spalle',
   'Braccia',
-  'Cardio & Metabolico'
+  'Cardio & Metabolico',
+  'Stretching & Mobilità'
 ];
