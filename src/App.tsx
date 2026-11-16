@@ -153,6 +153,8 @@ export const App: React.FC = () => {
               <Flame className="w-5 h-5 fill-current" />
             </div>
             <span className="text-[22px] font-semibold tracking-tight text-on-surface">FitPulse</span>
+            {/* Versione sempre visibile: serve a capire se la PWA installata si è aggiornata. */}
+            <span className="text-xs text-on-surface-variant self-end mb-1">v{LATEST_VERSION}</span>
           </div>
 
           <div className="flex items-center gap-1">

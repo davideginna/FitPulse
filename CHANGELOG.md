@@ -9,6 +9,14 @@ L'app capisce solo questo formato:
 Ad ogni release aggiornare anche "version" in package.json.
 -->
 
+## 1.4.1 — 2026-11-16
+
+### Nuovo
+- Numero di **versione** accanto al nome dell'app, in alto.
+
+### Corretto
+- L'app installata ora si **aggiorna da sola**: controlla le novità ogni volta che la riapri e si ricarica appena pronta.
+
 ## 1.4.0 — 2026-11-16
 
 ### Nuovo

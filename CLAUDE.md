@@ -55,5 +55,6 @@ The app must be served over HTTP (not opened via `file://`), otherwise the servi
 ## Notes
 
 - `dist/` is generated build output (git-ignored).
+- PWA updates: `main.tsx` registers the service worker (`virtual:pwa-register`, `autoUpdate`), reloads when a new version activates and re-checks whenever the app returns to the foreground. The header shows `v<LATEST_VERSION>` (from `CHANGELOG.md`).
 - PWA manifest/icons are configured in `vite.config.ts`; icons live in `public/` as SVG.
 - UI is mobile-first: content is constrained to `max-w-md`; Material 3 look (top app bar, navigation bar with pill indicator, bottom sheets for details).
